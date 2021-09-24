@@ -1,25 +1,17 @@
 .DS_Store
-node_modules
-/dist
-/buildDir
-.parcel-cache
-
-# local env files
-.env.local
-.env.*.local
-
-# Log files
+debug.log
+node_modules/
+dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+package-lock.json
+tests/**/coverage/
 
 # Editor directories and files
+yarn.lock
 .idea
-.vscode
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
-yarn.lock
