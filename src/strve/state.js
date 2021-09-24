@@ -1,4 +1,3 @@
-// state
 const state = {
     _nHtml: [],
     _oHtml: [],

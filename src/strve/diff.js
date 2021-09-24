@@ -109,7 +109,6 @@ function toValue(val, el) {
     }
 }
 
-// Mount node
 function mountNode(render, selector) {
     if (!state.isMounted) {
         mount(state.oldTree = render, document.querySelector(selector));

@@ -1,7 +1,6 @@
 import state from './state.js'
 import mountNode from './diff.js'
 
-// processing simple values
 function ref() {
     return new Proxy(state._data, {
         get: (target, key) => {
@@ -16,7 +15,6 @@ function ref() {
     })
 }
 
-// reactiveHandlers
 const reactiveHandlers = {
     get: (target, key) => {
         if (typeof target[key] === 'object' && target[key] !== null) {
@@ -31,7 +29,6 @@ const reactiveHandlers = {
     }
 };
 
-// respond to complex objects
 function reactive() {
     return new Proxy(state._data, reactiveHandlers)
 }
