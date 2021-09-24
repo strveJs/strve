@@ -36,8 +36,8 @@ function vnode(s) {
         }(s)), r), arguments, [])).length > 1 ? r : r[0]
 }
 
-const html = vnode.bind(h);
+const template = vnode.bind(h);
 
 export {
-    html
+    template
 }

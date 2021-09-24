@@ -8,7 +8,7 @@ function createView(v) {
     v.el ? mountNode(v.template, v.el) : console.error("Error: Please set el property!");
 }
 
-export { html } from './vnode.js'
+export { template } from './vnode.js'
 export { eventListener } from './eventListener.js'
 export { reactive, ref } from './reactivety.js'
 export { createView }
