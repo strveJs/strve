@@ -1,0 +1,13 @@
+{
+  "name": "vite-strview",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --open",
+    "serve": "vite preview",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^2.5.8"
+  }
+}

@@ -1,0 +1,8 @@
+.container {
+  text-align: center;
+  margin-top: 100px;
+  line-height: 46px;
+}
+.container > img {
+  margin-bottom: 40px;
+}
