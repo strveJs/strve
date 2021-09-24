@@ -1,26 +1,13 @@
 {
-  "name": "strve",
+  "name": "vite-strview",
   "version": "1.0.0",
-  "description": "A JS library that can convert strings into view",
-  "main": "dist/strve.esm.js",
-  "module": "dist/strve.esm.js",
-  "scripts": {
-    "build": "rollup -c"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/maomincoding/strve.git"
-  },
-  "private": false,
-  "keywords": ["strve","strvejs"],
-  "author": "maomincoding",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/maomincoding/strve/issues"
+  "scripts": {
+    "dev": "vite --open",
+    "serve": "vite preview",
+    "build": "vite build"
   },
-  "homepage": "https://github.com/maomincoding/strve#readme",
   "devDependencies": {
-    "rollup": "^2.57.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "vite": "^2.5.8"
   }
 }
