@@ -1,8 +1,9 @@
 import { eventListener } from '../strve';
-import { useItem } from './item';
+import { useItem, executes } from './item';
 
 const eventList = [
-    ['.color-red', 'click', useItem]
+    ['.color-red', 'click', useItem],
+    ['.txt', 'click', executes]
 ]
 
 function methods() {
