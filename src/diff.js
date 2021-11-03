@@ -2,6 +2,14 @@ import state from './state.js';
 
 const reg = new RegExp('{(.+?)}');
 
+function safeGet(obj, path) {
+  try {
+    return path.split('.').reduce((o, k) => o[k], obj);
+  } catch (e) {
+    return undefined;
+  }
+}
+
 function mount(vnode, container, anchor) {
   const el = document.createElement(vnode.type);
   vnode.el = el;
@@ -58,7 +66,7 @@ function patch(n1, n2) {
           if (state._data.hasOwnProperty(key)) {
             newValue = state._data[key];
           } else {
-            newValue = eval(`state._data.${key}`);
+            newValue = safeGet(state._data, key.toString());
           }
         }
         el.setAttribute(key, newValue);
@@ -120,7 +128,7 @@ function testVal(val, el, _val) {
 function toValue(val, el) {
   if (reg.test(val)) {
     const key = reg.exec(val)[1];
-    state._data.hasOwnProperty(key) ? testVal(val, el, state._data[key]) : testVal(val, el, eval(`state._data.${key}`));
+    state._data.hasOwnProperty(key) ? testVal(val, el, state._data[key]) : testVal(val, el, safeGet(state._data, key.toString()));
   } else {
     el.textContent = val;
   }
