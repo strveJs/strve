@@ -31,7 +31,7 @@
 <body>
     <div id="app"></div>
     <script type="module">
-        import { Strve, render, useEvent, updateView } from 'https://cdn.jsdelivr.net/npm/strvejs@1.0.4/dist/strve.esm.min.js';
+        import { Strve, render, useEvent, updateView } from 'https://cdn.jsdelivr.net/npm/strvejs@1/dist/strve.esm.min.js';
 
         const state = {
             arr: ['1', '2'],
