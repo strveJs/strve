@@ -107,7 +107,7 @@ function f2() {
 
 ## Documentation
 
-To learn more about Strve, check [its documentation]().
+To learn more about Strve, check [its documentation](https://www.maomin.club/site/strvejs/).
 
 ## License
 
