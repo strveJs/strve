@@ -15,6 +15,13 @@ function mount(vnode, container, anchor) {
   vnode.el = el;
 
   if (vnode.props) {
+    for (let index = 0; index < Object.keys(vnode.props).length; index++) {
+      const element = Object.keys(vnode.props)[index].toString();
+      if (element.startsWith('on')) {
+        el.addEventListener(element.split('on')[1], vnode.props[element], false);
+      }
+    }
+
     for (const key in vnode.props) {
       if (typeof vnode.props[key] === 'string' && reg.test(vnode.props[key])) {
         const ikey = reg.exec(vnode.props[key])[1];
@@ -43,6 +50,13 @@ function mount(vnode, container, anchor) {
   }
 }
 
+function remove({ el, key, oldProps }) {
+  el.removeAttribute(key);
+  if (key.startsWith('on')) {
+    el.removeEventListener(key.split('on')[1], oldProps[key], false);
+  }
+}
+
 function patch(n1, n2) {
   if (n1.type !== n2.type) {
     const parent = n1.el.parentNode;
@@ -56,10 +70,18 @@ function patch(n1, n2) {
 
   const oldProps = n1.props || {};
   const newProps = n2.props || {};
+
+  for (let index = 0; index < Object.keys(newProps).length; index++) {
+    const element = Object.keys(newProps)[index].toString();
+    if (element.startsWith('on')) {
+      el.addEventListener(element.split('on')[1], newProps[element], false);
+    }
+  }
+
   for (const key in newProps) {
     let newValue = newProps[key];
     let oldValue = oldProps[key];
-    if (newValue != null) {
+    if (newValue !== null) {
       if (newValue !== oldValue) {
         if (reg.test(newValue)) {
           const key = reg.exec(newValue)[1];
@@ -72,12 +94,13 @@ function patch(n1, n2) {
         el.setAttribute(key, newValue);
       }
     } else {
-      el.removeAttribute(key);
+      remove({ el, key, oldProps });
     }
   }
+
   for (const key in oldProps) {
     if (!(key in newProps)) {
-      el.removeAttribute(key);
+      remove({ el, key, oldProps });
     }
   }
 

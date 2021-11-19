@@ -1,6 +1,5 @@
 import state from './state.js';
 import mountNode from './diff.js';
-import methods from './ways.js';
 
 function Strve(el, v) {
   state._data = v.data;
@@ -9,7 +8,6 @@ function Strve(el, v) {
   if (el) {
     if (state._template().type) {
       mountNode(state._template(), el);
-      methods(v.ways);
     } else {
       throw Error('[Strve warn]:Multiple root nodes returned from render function. Render function should return a single root node.');
     }

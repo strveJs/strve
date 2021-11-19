@@ -31,7 +31,7 @@
 <body>
     <div id="app"></div>
     <script type="module">
-        import { Strve, render, useEvent, updateView } from 'https://cdn.jsdelivr.net/npm/strvejs@1/dist/strve.esm.min.js';
+        import { Strve, render, updateView } from 'https://cdn.jsdelivr.net/npm/strvejs@1/dist/strve.esm.min.js';
 
         const state = {
             arr: ['1', '2'],
@@ -40,7 +40,7 @@
         function App() {
             return render`
               <div class='inner'>
-                  <button id='btn2'>push</button>
+                  <button id='btn2' onclick=${usePush}>push</button>
                   <ul>
                     ${state.arr.map((todo) => render`<li key=${todo}>${todo}</li>`)}
                   </ul>
@@ -48,17 +48,16 @@
           `;
         }
 
-        Strve('#app', {
-            data: Object.assign(state),
-            template: App,
-            ways: [useEvent('#btn2', 'click', f2)],
-        });
-
-        function f2() {
+        function usePush() {
             updateView(() => {
                 state.arr.push('3');
             });
         }
+
+        Strve('#app', {
+            data: { state },
+            template: App
+        });
     </script>
 </body>
 
@@ -83,7 +82,7 @@ const state = {
 function App() {
     return render`
     <div class='inner'>
-        <button id='btn2'>push</button>
+        <button id='btn2' onclick=${usePush}>push</button>
         <ul>
             ${state.arr.map((todo) => render`<li key=${todo}>${todo}</li>`)}
         </ul>
@@ -91,18 +90,16 @@ function App() {
 `;
 }
 
-Strve('#app', {
-    data: Object.assign(state),
-    template: App,
-    ways: [useEvent('#btn2', 'click', f2)],
-});
-
-function f2() {
+function usePush() {
     updateView(() => {
         state.arr.push('3');
     });
 }
 
+Strve('#app', {
+    data: { state },
+    template: App
+});
 ```
 
 ## Documentation
