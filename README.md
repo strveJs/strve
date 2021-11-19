@@ -73,7 +73,7 @@ npm install strvejs
 ```
 
 ```js
-import { Strve, useEvent } from 'strvejs';
+import { Strve, render, updateView } from 'strvejs';
 
 const state = {
     arr: ['1', '2'],
