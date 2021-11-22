@@ -10,50 +10,71 @@ function safeGet(obj, path) {
   }
 }
 
-function mount(vnode, container, anchor) {
-  const el = document.createElement(vnode.type);
-  vnode.el = el;
-
-  if (vnode.props) {
-    for (let index = 0; index < Object.keys(vnode.props).length; index++) {
-      const element = Object.keys(vnode.props)[index].toString();
-      if (element.startsWith('on')) {
-        el.addEventListener(element.split('on')[1], vnode.props[element], false);
-      }
-    }
-
-    for (const key in vnode.props) {
-      if (typeof vnode.props[key] === 'string' && reg.test(vnode.props[key])) {
-        const ikey = reg.exec(vnode.props[key])[1];
-        vnode.props[key] = vnode.props[key].replace(reg, state._data[ikey]);
-      }
-      el.setAttribute(key, vnode.props[key]);
-    }
-  }
-  if (vnode.children) {
-    if (typeof vnode.children[0] === 'string') {
-      toValue(vnode.children[0], el);
-    } else if (Array.isArray(vnode.children[0])) {
-      vnode.children[0].forEach((child) => {
-        mount(child, el);
-      });
-    } else {
-      vnode.children.forEach((child) => {
-        mount(child, el);
-      });
-    }
-  }
-  if (anchor) {
-    container.insertBefore(el, anchor);
-  } else {
-    container.appendChild(el);
-  }
-}
-
 function remove({ el, key, oldProps }) {
   el.removeAttribute(key);
   if (key.startsWith('on')) {
     el.removeEventListener(key.split('on')[1], oldProps[key], false);
+  }
+}
+
+function add(el, props) {
+  for (let index = 0; index < Object.keys(props).length; index++) {
+    const element = Object.keys(props)[index].toString();
+    if (element.startsWith('on')) {
+      el.addEventListener(element.split('on')[1], props[element], false);
+    }
+  }
+}
+
+function testVal(val, el, _val) {
+  val = val.replace(reg, _val);
+  reg.test(val) ? toVal(val, el) : (el.textContent = String(val));
+}
+
+function toVal(val, el) {
+  if (reg.test(val)) {
+    const key = reg.exec(val)[1];
+    state._data.hasOwnProperty(key) ? testVal(val, el, state._data[key]) : testVal(val, el, safeGet(state._data, key.toString()));
+  } else {
+    el.textContent = String(val);
+  }
+}
+
+// diff
+function mount(vnode, container, anchor) {
+  if (vnode.type) {
+    const el = document.createElement(vnode.type);
+    vnode.el = el;
+
+    if (vnode.props) {
+      add(el, vnode.props);
+
+      for (const key in vnode.props) {
+        if (typeof vnode.props[key] === 'string' && reg.test(vnode.props[key])) {
+          const ikey = reg.exec(vnode.props[key])[1];
+          vnode.props[key] = vnode.props[key].replace(reg, state._data[ikey]);
+        }
+        el.setAttribute(key, vnode.props[key]);
+      }
+    }
+    if (vnode.children) {
+      if (typeof vnode.children[0] === 'string') {
+        toVal(vnode.children[0], el);
+      } else if (Array.isArray(vnode.children[0])) {
+        vnode.children[0].forEach((child) => {
+          mount(child, el);
+        });
+      } else {
+        vnode.children.forEach((child) => {
+          mount(child, el);
+        });
+      }
+    }
+    if (anchor) {
+      container.insertBefore(el, anchor);
+    } else {
+      container.appendChild(el);
+    }
   }
 }
 
@@ -65,18 +86,12 @@ function patch(n1, n2) {
     mount(n2, parent, anchor);
     return;
   }
-
   const el = (n2.el = n1.el);
 
   const oldProps = n1.props || {};
   const newProps = n2.props || {};
 
-  for (let index = 0; index < Object.keys(newProps).length; index++) {
-    const element = Object.keys(newProps)[index].toString();
-    if (element.startsWith('on')) {
-      el.addEventListener(element.split('on')[1], newProps[element], false);
-    }
-  }
+  add(el, newProps);
 
   for (const key in newProps) {
     let newValue = newProps[key];
@@ -108,7 +123,7 @@ function patch(n1, n2) {
   const nc = n2.children;
 
   if (typeof nc[0] === 'string') {
-    toValue(nc[0], el);
+    toVal(nc[0], el);
   } else {
     if (oc[0] !== 'string') {
       if (Array.isArray(oc[0]) && Array.isArray(nc[0])) {
@@ -140,20 +155,6 @@ function patch(n1, n2) {
       el.innerHTML = '';
       nc.forEach((c) => mount(c, el));
     }
-  }
-}
-
-function testVal(val, el, _val) {
-  val = val.replace(reg, _val);
-  reg.test(val) ? toValue(val, el) : (el.textContent = val);
-}
-
-function toValue(val, el) {
-  if (reg.test(val)) {
-    const key = reg.exec(val)[1];
-    state._data.hasOwnProperty(key) ? testVal(val, el, state._data[key]) : testVal(val, el, safeGet(state._data, key.toString()));
-  } else {
-    el.textContent = val;
   }
 }
 
