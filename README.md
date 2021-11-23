@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="" target="_blank" rel="noopener noreferrer">
+  <a href="https://github.com/maomincoding/strve" target="_blank" rel="noopener noreferrer">
     <img width="180" src="https://www.maomin.club/site/strvejs/logo.png" alt="Strve logo">
   </a>
 </p>
@@ -9,10 +9,17 @@
 </p>
 <br/>
 
-# Strve
+# Strve.js
 
-> A JS library that can convert strings into view.
+A JS library that can convert strings into view.
 
+- ⚡️ Blazing Fast Virtual DOM.
+- 📦 Only 8KB before compression.
+- 🗂 Easy to flexibly disassemble and assemble different code blocks.
+
+## Introduce
+
+Strve.js is a JS library that can convert strings into views. The string here refers to the template string, so you only need to develop the view in JavaScript. Strve.js is not only easy to use, but also easy to flexibly disassemble and assemble different code blocks.
 ## Usage
 
 ### CDN
@@ -72,36 +79,6 @@ yarn add strvejs
 npm install strvejs
 ```
 
-```js
-import { Strve, render, updateView } from 'strvejs';
-
-const state = {
-    arr: ['1', '2'],
-};
-
-function App() {
-    return render`
-    <div class='inner'>
-        <button id='btn2' onclick=${usePush}>push</button>
-        <ul>
-            ${state.arr.map((todo) => render`<li key=${todo}>${todo}</li>`)}
-        </ul>
-    </div>
-`;
-}
-
-function usePush() {
-    updateView(() => {
-        state.arr.push('3');
-    });
-}
-
-Strve('#app', {
-    data: { state },
-    template: App
-});
-```
-
 ## Documentation
 
 To learn more about Strve, check [its documentation](https://www.maomin.club/site/strvejs/).
@@ -109,3 +86,5 @@ To learn more about Strve, check [its documentation](https://www.maomin.club/sit
 ## License
 
 [MIT](http://opensource.org/licenses/MIT)
+
+Copyright (c) 2021-present, maomincoding
