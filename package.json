@@ -1,6 +1,6 @@
 {
   "name": "strvejs",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "A JS library that can convert strings into view",
   "main": "dist/strve.esm.js",
   "module": "dist/strve.esm.js",
@@ -17,7 +17,7 @@
     "url": "git+https://github.com/maomincoding/strve.git"
   },
   "private": false,
-  "keywords": ["strve","strvejs"],
+  "keywords": ["strve","strvejs","dom","mvvm","virtual dom","html","template","string"],
   "author": "maomincoding",
   "license": "MIT",
   "bugs": {
