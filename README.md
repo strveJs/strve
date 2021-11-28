@@ -14,7 +14,7 @@
 A JS library that can convert strings into view.
 
 - ⚡️ Blazing Fast Virtual DOM.
-- 📦 Only 8KB before compression.
+- 📦 The size of the source code file is only 4KB.
 - 🗂 Easy to flexibly disassemble and assemble different code blocks.
 
 ## Introduce
