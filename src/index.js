@@ -1,6 +1,6 @@
 /*!
- * Strve.js v1.1.5
- * (c) 2021-2021 Vam,maomincoding
+ * Strve.js v1.1.7
+ * (c) 2021-2021 maomincoding
  * Released under the MIT License.
  */
 const state = {
@@ -16,14 +16,8 @@ function Strve(el, v) {
   state._data = v.data;
   state._template = v.template;
   state._el = el;
-  if (el) {
-    if (state._template().type) {
-      mountNode(state._template(), el);
-    } else {
-      throw Error('[Strve warn]:Multiple root nodes returned from render function. Render function should return a single root node.');
-    }
-  } else {
-    throw Error('[Strve warn]:Please set el property!');
+  if (el && state._template().type) {
+    mountNode(state._template(), el);
   }
 }
 
@@ -222,14 +216,14 @@ let n = function (t, s, r, e) {
       3 === p
         ? (e[0] = a)
         : 4 === p
-        ? (e[1] = Object.assign(e[1] || {}, a))
-        : 5 === p
-        ? ((e[1] = e[1] || {})[s[++h]] = a)
-        : 6 === p
-        ? (e[1][s[++h]] += a + '')
-        : p
-        ? ((u = t.apply(a, n(t, a, r, ['', null]))), e.push(u), a[0] ? (s[0] |= 2) : ((s[h - 2] = 0), (s[h] = u)))
-        : e.push(a);
+          ? (e[1] = Object.assign(e[1] || {}, a))
+          : 5 === p
+            ? ((e[1] = e[1] || {})[s[++h]] = a)
+            : 6 === p
+              ? (e[1][s[++h]] += a + '')
+              : p
+                ? ((u = t.apply(a, n(t, a, r, ['', null]))), e.push(u), a[0] ? (s[0] |= 2) : ((s[h - 2] = 0), (s[h] = u)))
+                : e.push(a);
     }
   }
   return e;
@@ -244,72 +238,72 @@ function vnode(s) {
     (r = n(
       this,
       r.get(s) ||
-        (r.set(
-          s,
-          (r = (function (n) {
-            let t,
-              s,
-              r = 1,
-              e = '',
-              u = '',
-              h = [0],
-              p,
-              a = 0;
-            for (
-              t,
-                s,
-                r,
-                e,
-                u,
-                h,
-                p = function (n) {
-                  1 === r && (n || (e = e.replace(/^\s*\n\s*|\s*\n\s*$/g, '')))
-                    ? h.push(0, n, e)
-                    : 3 === r && (n || e)
-                    ? (h.push(3, n, e), (r = 2))
-                    : 2 === r && '...' === e && n
+      (r.set(
+        s,
+        (r = (function (n) {
+          let t,
+            s,
+            r = 1,
+            e = '',
+            u = '',
+            h = [0],
+            p,
+            a = 0;
+          for (
+            t,
+            s,
+            r,
+            e,
+            u,
+            h,
+            p = function (n) {
+              1 === r && (n || (e = e.replace(/^\s*\n\s*|\s*\n\s*$/g, '')))
+                ? h.push(0, n, e)
+                : 3 === r && (n || e)
+                  ? (h.push(3, n, e), (r = 2))
+                  : 2 === r && '...' === e && n
                     ? h.push(4, n, 0)
                     : 2 === r && e && !n
-                    ? h.push(5, 0, !0, e)
-                    : r >= 5 && ((e || (!n && 5 === r)) && (h.push(r, 0, e, s), (r = 6)), n && (h.push(r, n, 0, s), (r = 6))),
-                    (e = '');
-                },
-                a;
-              a < n.length;
-              a++
-            ) {
-              a && (1 === r && p(), p(a));
-              for (let l = 0; l < n[a].length; l++)
-                (t = n[a][l]),
-                  1 === r
-                    ? '<' === t
-                      ? (p(), (h = [h]), (r = 3))
-                      : (e += t)
-                    : 4 === r
+                      ? h.push(5, 0, !0, e)
+                      : r >= 5 && ((e || (!n && 5 === r)) && (h.push(r, 0, e, s), (r = 6)), n && (h.push(r, n, 0, s), (r = 6))),
+                (e = '');
+            },
+            a;
+            a < n.length;
+            a++
+          ) {
+            a && (1 === r && p(), p(a));
+            for (let l = 0; l < n[a].length; l++)
+              (t = n[a][l]),
+                1 === r
+                  ? '<' === t
+                    ? (p(), (h = [h]), (r = 3))
+                    : (e += t)
+                  : 4 === r
                     ? '--' === e && '>' === t
                       ? ((r = 1), (e = ''))
                       : (e = t + e[0])
                     : u
-                    ? t === u
-                      ? (u = '')
-                      : (e += t)
-                    : '"' === t || "'" === t
-                    ? (u = t)
-                    : '>' === t
-                    ? (p(), (r = 1))
-                    : r &&
-                      ('=' === t
-                        ? ((r = 5), (s = e), (e = ''))
-                        : '/' === t && (r < 5 || '>' === n[a][l + 1])
-                        ? (p(), 3 === r && (h = h[0]), (r = h), (h = h[0]).push(2, 0, r), (r = 0))
-                        : ' ' === t || '\t' === t || '\n' === t || '\r' === t
-                        ? (p(), (r = 2))
-                        : (e += t)),
-                  3 === r && '!--' === e && ((r = 4), (h = h[0]));
-            }
-            return p(), h;
-          })(s))
-        ),
+                      ? t === u
+                        ? (u = '')
+                        : (e += t)
+                      : '"' === t || "'" === t
+                        ? (u = t)
+                        : '>' === t
+                          ? (p(), (r = 1))
+                          : r &&
+                          ('=' === t
+                            ? ((r = 5), (s = e), (e = ''))
+                            : '/' === t && (r < 5 || '>' === n[a][l + 1])
+                              ? (p(), 3 === r && (h = h[0]), (r = h), (h = h[0]).push(2, 0, r), (r = 0))
+                              : ' ' === t || '\t' === t || '\n' === t || '\r' === t
+                                ? (p(), (r = 2))
+                                : (e += t)),
+                3 === r && '!--' === e && ((r = 4), (h = h[0]));
+          }
+          return p(), h;
+        })(s))
+      ),
         r),
       arguments,
       []
