@@ -31,23 +31,25 @@ The easiest way to try `Strve.js` is to use the direct import CDN link. You can 
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strve.js</title>
+    <title>Hello Strve.js</title>
 </head>
 
 <body>
     <div id="app"></div>
     <script type="module">
-        import { Strve, render, updateView } from 'https://cdn.jsdelivr.net/npm/strvejs/dist/strve.esm.min.js';
+        import { Strve, updateView, render } from 'https://cdn.jsdelivr.net/npm/strvejs/dist/strve.esm.js';
 
         const state = {
             arr: ['1', '2'],
+            msg: 'hello',
+            a: 1
         };
 
         function App() {
             return render`
               <div class='inner'>
+                  <p>{state.msg}</p>
+                  <p>${state.a + state.a}</p> 
                   <button id='btn2' onclick=${usePush}>push</button>
                   <ul>
                     ${state.arr.map((todo) => render`<li key=${todo}>${todo}</li>`)}
