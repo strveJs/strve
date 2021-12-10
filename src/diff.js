@@ -161,10 +161,14 @@ function mountNode(dom, selector) {
   }
 }
 
-async function updateView(cb) {
-  if (typeof cb === 'function') {
+async function updateView(cb,router) {
+  if (typeof cb === 'function'&& !router) {
     await cb();
     mountNode(state._template(), state._el);
+  } else if(router==='useRouter'){
+    await cb();
+    document.querySelector(state._el).innerHTML = '';
+    mount(state._template(), document.querySelector(state._el));
   }
 }
 

@@ -10,9 +10,7 @@ const state = {
 
 function Strve(el, v) {
     [state._el, state._data, state._template] = [el, v.data, v.template];
-    if (el && v.template().type) {
-        mountNode(v.template(), el);
-    }
+    mountNode(v.template(), el);
 }
 
 export {

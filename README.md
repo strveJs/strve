@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/maomincoding/strve" target="_blank" rel="noopener noreferrer">
-    <img width="180" src="https://www.maomin.club/site/strvejs/logo.png" alt="Strve logo">
+    <img width="180" src="https://maomincoding.github.io/strvejs-doc/logo.png" alt="Strve logo">
   </a>
 </p>
 <br/>
@@ -75,7 +75,7 @@ The easiest way to try `Strve.js` is to use the direct import CDN link. You can 
 ```
 ## Documentation
 
-To learn more about Strve, check [its documentation](https://www.maomin.club/site/strvejs/).
+To learn more about Strve, check [its documentation](https://maomincoding.github.io/strvejs-doc/).
 
 ## License
 
