@@ -211,7 +211,7 @@ async function updateView(cb, status) {
     await cb();
     if (status === 'useRouter') {
       document.querySelector(state._el).innerHTML = '';
-      mount(state._template(), document.querySelector(state._el));
+      mount((state.oldTree = state._template()), document.querySelector(state._el));
     } else {
       mountNode(state._template(), state._el, status);
     }
