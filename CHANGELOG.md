@@ -1,4 +1,4 @@
-## 1.5.0 (2022-01-21)
+## 2.0.0 (2022-01-23)
 
 ### Features
 
@@ -14,4 +14,4 @@
    
 - Support parent and child components to pass values to each other;
 
-- Adapt to Bootstrap UI framework;
+- Adapt to Bootstrap5、Tailwindcss UI framework;
