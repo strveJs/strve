@@ -1,4 +1,6 @@
-import { mountNode } from './diff.js';
+import {
+    mountNode
+} from './diff.js';
 
 const state = {
     _el: null,

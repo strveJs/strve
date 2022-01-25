@@ -1,3 +1,10 @@
+## 2.1.0 (2022-01-25)
+
+### Features
+
+- Fixed the problem that the DOM attribute property could not be assigned;
+- Improve the logical problem of converting strings to virtual DOM;
+
 ## 2.0.0 (2022-01-23)
 
 ### Features

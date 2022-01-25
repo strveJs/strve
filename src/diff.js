@@ -29,7 +29,7 @@ function addEvent(el, props) {
   for (let index = 0; index < Object.keys(props).length; index++) {
     const element = Object.keys(props)[index].toString();
     if (element.startsWith('on')) {
-      const name = element.split('on')[1][0].toLowerCase() + element.split('on')[1].substring(1);   
+      const name = element.split('on')[1][0].toLowerCase() + element.split('on')[1].substring(1);
       el.addEventListener(name, props[element], false);
     }
   }
@@ -73,7 +73,6 @@ function mount(vnode, container, anchor) {
           if (typeof vnode.props[key] !== 'function') {
             el.setAttribute(key, vnode.props[key]);
           }
-
           if (typeof vnode.props[key] === 'object' && typeof vnode.props[key] !== null) {
             useStyle(el, vnode.props[key]);
           }
@@ -122,12 +121,12 @@ function patch(n1, n2, status) {
   const newProps = n2.props || {};
 
   addEvent(el, newProps);
-
   for (const key in newProps) {
     let [newValue, oldValue] = [newProps[key], oldProps[key]];
     if (newValue !== oldValue) {
       if (newValue !== null) {
         if (typeof newValue !== 'function') {
+          el[key] && (el[key] = newValue); // property
           el.setAttribute(key, newValue);
         }
       } else {
