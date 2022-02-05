@@ -1,3 +1,10 @@
+## 2.2.0 (2022-02-05)
+
+### Features
+
+- Support SVG elements;
+- Optimize internal diff algorithm;
+- Add necessary error prompt;
 ## 2.1.0 (2022-01-25)
 
 ### Features

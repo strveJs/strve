@@ -1,20 +1,53 @@
+// version:2.2.0
+
 import {
   state
 } from "./init.js";
 
 const reg = new RegExp('{(.+?)}');
 
-function useStyle(el, prototype) {
+const isHTMLTag = makeMap(
+  'html,body,base,head,link,meta,style,title,' +
+  'address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,' +
+  'div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,' +
+  'a,b,abbr,bdi,bdo,br,cite,code,data,dfn,em,i,kbd,mark,q,rp,rt,rtc,ruby,' +
+  's,samp,small,span,strong,sub,sup,time,u,var,wbr,area,audio,map,track,video,' +
+  'embed,object,param,source,canvas,script,noscript,del,ins,' +
+  'caption,col,colgroup,table,thead,tbody,td,th,tr,' +
+  'button,datalist,fieldset,form,input,label,legend,meter,optgroup,option,' +
+  'output,progress,select,textarea,' +
+  'details,dialog,menu,menuitem,summary,' +
+  'content,element,shadow,template,blockquote,iframe,tfoot'
+);
+
+const namespaceMap = {
+  svg: 'http://www.w3.org/2000/svg',
+  math: 'http://www.w3.org/1998/Math/MathML'
+};
+
+const xlinkNS = 'http://www.w3.org/1999/xlink';
+
+const isSVG = makeMap(
+  'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
+  'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
+  'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
+  'feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur,' +
+  'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
+  'linearGradient,stop,radialGradient,' +
+  'animateTransform,animateMotion'
+);
+
+function setStyleProp(el, prototype) {
   for (let i in prototype) {
     el.style[i] = prototype[i];
   }
 }
 
-function deepGet(obj, path) {
+function getDeepData(obj, path) {
   try {
-    return path.split('.').reduce((o, k) => o[k], obj);
+    return path.split('.').reduce((o, k) => o[k], obj)
   } catch (e) {
-    return undefined;
+    return undefined
   }
 }
 
@@ -40,29 +73,79 @@ function removeEvent({
   key,
   oldProps
 }) {
-  el.removeAttribute(key);
+  if (isXlink(key)) {
+    el.removeAttributeNS(xlinkNS, getXlinkProp(key));
+  } else {
+    el.removeAttribute(key);
+  }
+
   if (key.startsWith('on')) {
     const name = key.split('on')[1][0].toLowerCase() + key.split('on')[1].substring(1);
     el.removeEventListener(name, oldProps[key], false);
   }
 }
 
-function useText(val, el, _val) {
+function setTextNode(val, el, _val) {
   if (_val) {
     val = val.replace(reg, _val);
   }
 
   if (reg.test(val)) {
     const key = reg.exec(val)[1];
-    state._data.hasOwnProperty(key) ? useText(val, el, state._data[key]) : useText(val, el, deepGet(state._data, key.toString()));
+    state._data.hasOwnProperty(key) ? setTextNode(val, el, state._data[key]) : setTextNode(val, el, getDeepData(state._data, key.toString()));
   } else {
     el.textContent = val.toString();
   }
 }
 
+function isXlink(name) {
+  return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink'
+};
+
+function getXlinkProp(name) {
+  return isXlink(name) ? name.slice(6, name.length) : ''
+};
+
+function getTagNamespace(tag) {
+  if (isSVG(tag)) {
+    return 'svg'
+  }
+
+  if (tag === 'math') {
+    return 'math'
+  }
+}
+
+function makeMap(str) {
+  const map = Object.create(null);
+  const list = str.split(',');
+  for (let i = 0; i < list.length; i++) {
+    map[list[i]] = true;
+  }
+  return function (val) {
+    return map[val];
+  }
+}
+
+function createElementNS(namespace, tagName) {
+  return document.createElementNS(namespaceMap[namespace], tagName)
+}
+
+function createElement(tag) {
+  return document.createElement(tag)
+}
+
+function setElementNode(tag) {
+  if (isHTMLTag(tag)) {
+    return document.createElement(tag)
+  } else if (isSVG(tag)) {
+    return createElementNS(getTagNamespace(tag), tag)
+  }
+}
+
 function mount(vnode, container, anchor) {
   if (vnode.type) {
-    const el = document.createElement(vnode.type);
+    const el = setElementNode(vnode.type);
     vnode.el = el;
 
     if (vnode.props) {
@@ -71,10 +154,14 @@ function mount(vnode, container, anchor) {
       for (const key in vnode.props) {
         if (vnode.props.hasOwnProperty(key)) {
           if (typeof vnode.props[key] !== 'function') {
-            el.setAttribute(key, vnode.props[key]);
+            if (isXlink(key)) {
+              el.setAttributeNS(xlinkNS, key, vnode.props[key]);
+            } else {
+              el.setAttribute(key, vnode.props[key]);
+            }
           }
           if (typeof vnode.props[key] === 'object' && typeof vnode.props[key] !== null) {
-            useStyle(el, vnode.props[key]);
+            setStyleProp(el, vnode.props[key]);
           }
         }
       }
@@ -82,7 +169,7 @@ function mount(vnode, container, anchor) {
 
     if (vnode.children) {
       if (typeof vnode.children[0] === 'string' || typeof vnode.children[0] === 'number') {
-        useText(vnode.children[0].toString(), el);
+        setTextNode(vnode.children[0].toString(), el);
       } else {
         if (Array.isArray(vnode.children[0])) {
           vnode.children[0].forEach((child) => {
@@ -127,7 +214,11 @@ function patch(n1, n2, status) {
       if (newValue !== null) {
         if (typeof newValue !== 'function') {
           el[key] && (el[key] = newValue); // property
-          el.setAttribute(key, newValue);
+          if (isXlink(key)) {
+            el.setAttributeNS(xlinkNS, key, newValue);
+          } else {
+            el.setAttribute(key, newValue);
+          }
         }
       } else {
         removeEvent({
@@ -137,7 +228,7 @@ function patch(n1, n2, status) {
         });
       }
     } else if (typeof newValue === 'object' && typeof newValue !== null) {
-      useStyle(el, newValue);
+      setStyleProp(el, newValue);
     }
   }
 
@@ -154,7 +245,7 @@ function patch(n1, n2, status) {
   const [oc, nc, ocs, ncs] = [n1.children[0], n2.children[0], n1.children, n2.children];
 
   if (typeof nc === 'string' || typeof nc === 'number') {
-    useText(nc.toString(), el);
+    setTextNode(nc.toString(), el);
   } else {
     if (typeof oc !== 'string') {
       if (Array.isArray(oc) && Array.isArray(nc)) {
@@ -205,9 +296,9 @@ function mountNode(dom, selector, status) {
   }
 }
 
-async function updateView(cb, status) {
-  if (typeof cb === 'function') {
-    await cb();
+async function updateView(callback, status) {
+  if (typeof callback === 'function') {
+    await callback();
     if (status === 'useRouter') {
       document.querySelector(state._el).innerHTML = '';
       mount((state.oldTree = state._template()), document.querySelector(state._el));
