@@ -1,3 +1,8 @@
+## 2.3.1 (2022-02-08)
+
+### Features
+
+- Modify some error prompts;
 ## 2.3.0 (2022-02-08)
 
 ### Features

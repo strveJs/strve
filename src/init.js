@@ -1,4 +1,4 @@
-// version:2.3.0
+// version:2.3.1
 
 import {
     mountNode
@@ -12,7 +12,7 @@ const state = {
     isMounted: false,
 };
 
-const strveVersion = '2.3.0';
+const strveVersion = '2.3.1';
 
 function Strve(el, v) {
     if (el) {
@@ -21,7 +21,7 @@ function Strve(el, v) {
         if (!template[0]) {
             mountNode(template, el);
         } else {
-            console.error('[Strve warn]: Please check whether the' + ' ' + template[0] + ' ' + 'element is correct or other elements are correct.');
+            console.error('[Strve warn]: Check that the view has only one root element, or that other elements are written correctly.');
         }
     } else {
         console.error('[Strve warn]: There must be a mount element node.');
