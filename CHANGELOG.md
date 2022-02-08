@@ -1,3 +1,9 @@
+## 2.3.0 (2022-02-08)
+
+### Features
+
+- Add version number ` strveversion ` API;
+- Modify the internal logic of the `updateview` API;
 ## 2.2.0 (2022-02-05)
 
 ### Features

@@ -1,4 +1,4 @@
-// version:2.2.0
+// version:2.3.0
 
 import {
   state
@@ -296,15 +296,18 @@ function mountNode(dom, selector, status) {
   }
 }
 
-async function updateView(callback, status) {
-  if (typeof callback === 'function') {
-    await callback();
+function updateView(callback, status) {
+  if (typeof callback === 'function'&&typeof Promise !== 'undefined') {
+    return Promise.resolve().then(() => {
+      callback();
+  }).then(()=>{
     if (status === 'useRouter') {
       document.querySelector(state._el).innerHTML = '';
       mount((state.oldTree = state._template()), document.querySelector(state._el));
     } else {
       mountNode(state._template(), state._el, status);
     }
+  }).catch((err)=>console.error(err));
   }
 }
 

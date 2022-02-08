@@ -1,4 +1,4 @@
-// version:2.2.0
+// version:2.3.0
 
 import {
     mountNode
@@ -12,7 +12,7 @@ const state = {
     isMounted: false,
 };
 
-const strveVersion = '2.2.0';
+const strveVersion = '2.3.0';
 
 function Strve(el, v) {
     if (el) {
