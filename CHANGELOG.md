@@ -1,3 +1,16 @@
+## 2.3.2 (2022-02-19)
+
+### Features
+
+- HTML tag content supports displaying non-string types;
+- The `${}` symbol is used for data binding, and the `{}` symbol is no longer supported;
+- View templates support multiple root nodes;
+- View template supports Text node;
+- Fixed switching states during conditional rendering, and nodes could not be rendered correctly;
+- Added `watchDOMChange` API for monitoring DOM tree changes;
+- Added support for HTML template string highlighting (VSCode editor needs to install `es6-string-html` plugin);
+- Remove the `data` attribute parameter of the `Strve` API;
+- View templates support Class writing;
 ## 2.3.1 (2022-02-08)
 
 ### Features

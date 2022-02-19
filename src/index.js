@@ -1,12 +1,13 @@
 /*!
- * Strve.js v2.3.1
+ * Strve.js v2.3.2
  * (c) 2021-2022 maomincoding
  * Released under the MIT License.
  */
 
 export {
     Strve,
-    strveVersion
+    strveVersion,
+    watchDOMChange
 }
 from './init.js';
 export {

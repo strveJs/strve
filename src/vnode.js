@@ -1,8 +1,8 @@
-// version:2.3.1
+// version:2.3.2
 
-function ht(type, props, ...children) {
+function ht(tag, props, ...children) {
     return {
-        type,
+        tag,
         props,
         children
     };

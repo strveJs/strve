@@ -1,10 +1,12 @@
-// version:2.3.1
+// version:2.3.2
 
 import {
-  state
+  state,
+  getType,
+  useTemplate,
+  checkVnode,
+  makeMap
 } from "./init.js";
-
-const reg = new RegExp('{(.+?)}');
 
 const isHTMLTag = makeMap(
   'html,body,base,head,link,meta,style,title,' +
@@ -37,17 +39,14 @@ const isSVG = makeMap(
   'animateTransform,animateMotion'
 );
 
+function isComplexType(v) {
+  const typeData = ['object', 'array', 'function', 'regexp', 'date', 'math'];
+  return typeData.indexOf(getType(v)) !== -1
+}
+
 function setStyleProp(el, prototype) {
   for (let i in prototype) {
     el.style[i] = prototype[i];
-  }
-}
-
-function getDeepData(obj, path) {
-  try {
-    return path.split('.').reduce((o, k) => o[k], obj)
-  } catch (e) {
-    return undefined
   }
 }
 
@@ -85,19 +84,6 @@ function removeEvent({
   }
 }
 
-function setTextNode(val, el, _val) {
-  if (_val) {
-    val = val.replace(reg, _val);
-  }
-
-  if (reg.test(val)) {
-    const key = reg.exec(val)[1];
-    state._data.hasOwnProperty(key) ? setTextNode(val, el, state._data[key]) : setTextNode(val, el, getDeepData(state._data, key.toString()));
-  } else {
-    el.textContent = val.toString();
-  }
-}
-
 function isXlink(name) {
   return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink'
 };
@@ -116,36 +102,52 @@ function getTagNamespace(tag) {
   }
 }
 
-function makeMap(str) {
-  const map = Object.create(null);
-  const list = str.split(',');
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true;
-  }
-  return function (val) {
-    return map[val];
-  }
-}
-
 function createElementNS(namespace, tagName) {
   return document.createElementNS(namespaceMap[namespace], tagName)
 }
 
-function createElement(tag) {
-  return document.createElement(tag)
-}
-
-function setElementNode(tag) {
+function createNode(tag) {
   if (isHTMLTag(tag)) {
     return document.createElement(tag)
   } else if (isSVG(tag)) {
     return createElementNS(getTagNamespace(tag), tag)
+  } else if (tag === 'fragment') {
+    return document.createDocumentFragment()
+  } else if (tag === 'comment') {
+    return document.createComment('comment')
+  } else if (tag === 'textnode') {
+    return document.createTextNode('')
+  }
+}
+
+function setChildrenNode(childNode, fun, el) {
+  if (childNode.length === 1 && !isComplexType(childNode[0])) {
+    setTextNode(childNode, el);
+  } else if (childNode.length > 1 && !checkVnode(childNode)) {
+    const str = childNode.join().replace(/,/g, '');
+    setTextNode(str, el);
+  } else if (isComplexType(childNode[0]) && !childNode[0].tag && !checkVnode(childNode[0])) {
+    setTextNode(childNode[0], el);
+  } else {
+    fun();
+  }
+}
+
+function setTextNode(val, el) {
+  if (isComplexType(val)) {
+    if (getType(val) === 'function' || getType(val) === 'regexp' || getType(val) === 'array') {
+      el.textContent = String(val)
+    } else {
+      el.textContent = JSON.stringify(val);
+    }
+  } else {
+    el.textContent = val ? val.toString() : String(val);
   }
 }
 
 function mount(vnode, container, anchor) {
-  if (vnode.type) {
-    const el = setElementNode(vnode.type);
+  if (vnode.tag) {
+    const el = createNode(vnode.tag);
     vnode.el = el;
 
     if (vnode.props) {
@@ -153,14 +155,14 @@ function mount(vnode, container, anchor) {
 
       for (const key in vnode.props) {
         if (vnode.props.hasOwnProperty(key)) {
-          if (typeof vnode.props[key] !== 'function') {
+          if (getType(vnode.props[key]) !== 'function') {
             if (isXlink(key)) {
               el.setAttributeNS(xlinkNS, key, vnode.props[key]);
             } else {
               el.setAttribute(key, vnode.props[key]);
             }
           }
-          if (typeof vnode.props[key] === 'object' && typeof vnode.props[key] !== null) {
+          if (getType(vnode.props[key]) === 'object') {
             setStyleProp(el, vnode.props[key]);
           }
         }
@@ -168,17 +170,19 @@ function mount(vnode, container, anchor) {
     }
 
     if (vnode.children) {
-      if (typeof vnode.children[0] === 'string' || typeof vnode.children[0] === 'number') {
-        setTextNode(vnode.children[0].toString(), el);
-      } else {
-        if (Array.isArray(vnode.children[0])) {
+      setChildrenNode(vnode.children, mountChildrenNodes, el)
+
+      function mountChildrenNodes() {
+        if (getType(vnode.children[0]) === 'array') {
           vnode.children[0].forEach((child) => {
             mount(child, el);
           });
         } else {
-          vnode.children.forEach((child) => {
-            mount(child, el);
-          });
+          if (getType(vnode.children) === 'array') {
+            vnode.children.forEach((child) => {
+              mount(child, el);
+            });
+          }
         }
       }
     }
@@ -190,72 +194,77 @@ function mount(vnode, container, anchor) {
   }
 }
 
-function sameNode(n1, n2) {
-  if (n1.type !== n2.type) {
+function patch(n1, n2, status) {
+  if (n1.tag !== n2.tag) {
     const parent = n1.el.parentNode;
     const anchor = n1.el.nextSibling;
     parent.removeChild(n1.el);
     mount(n2, parent, anchor);
-  }
-}
+  } else {
+    if (n1 && n2 && checkVnode(n1) && checkVnode(n2)) {
+      const el = (n2.el = n1.el);
 
-function patch(n1, n2, status) {
-  sameNode(n1, n2);
+      const oldProps = n1.props || {};
+      const newProps = n2.props || {};
 
-  const el = (n2.el = n1.el);
+      for (const key in newProps) {
+        let [newValue, oldValue] = [newProps[key], oldProps[key]];
+        if (newValue !== oldValue) {
+          if (newValue !== null) {
+            if (getType(newValue) !== 'function') {
 
-  const oldProps = n1.props || {};
-  const newProps = n2.props || {};
+              el[key] && (el[key] = newValue); // property
+              if (isXlink(key)) {
+                el.setAttributeNS(xlinkNS, key, newValue);
+              } else {
+                el.setAttribute(key, newValue);
+              }
 
-  addEvent(el, newProps);
-  for (const key in newProps) {
-    let [newValue, oldValue] = [newProps[key], oldProps[key]];
-    if (newValue !== oldValue) {
-      if (newValue !== null) {
-        if (typeof newValue !== 'function') {
-          el[key] && (el[key] = newValue); // property
-          if (isXlink(key)) {
-            el.setAttributeNS(xlinkNS, key, newValue);
+              if (getType(newValue) === 'object') {
+                setStyleProp(el, newValue);
+              }
+            } else {
+              if (key.startsWith('on')) {
+                const name = key.split('on')[1][0].toLowerCase() + key.split('on')[1].substring(1);
+                el.addEventListener(name, newValue, false);
+              }
+            }
           } else {
-            el.setAttribute(key, newValue);
+            removeEvent({
+              el,
+              key,
+              oldProps
+            });
           }
         }
-      } else {
-        removeEvent({
-          el,
-          key,
-          oldProps
-        });
       }
-    } else if (typeof newValue === 'object' && typeof newValue !== null) {
-      setStyleProp(el, newValue);
-    }
-  }
 
-  for (const key in oldProps) {
-    if (!(key in newProps)) {
-      removeEvent({
-        el,
-        key,
-        oldProps
-      });
-    }
-  }
-
-  const [oc, nc, ocs, ncs] = [n1.children[0], n2.children[0], n1.children, n2.children];
-
-  if (typeof nc === 'string' || typeof nc === 'number') {
-    setTextNode(nc.toString(), el);
-  } else {
-    if (typeof oc !== 'string') {
-      if (Array.isArray(oc) && Array.isArray(nc)) {
-        patchNode(oc, nc, el, status);
-      } else {
-        patchNode(ocs, ncs, el, status);
+      for (const key in oldProps) {
+        if (!(key in newProps)) {
+          removeEvent({
+            el,
+            key,
+            oldProps
+          });
+        }
       }
-    } else {
-      el.innerHTML = '';
-      ncs.forEach((c) => mount(c, el));
+
+      const [oc, nc, ocs, ncs] = [n1.children && n1.children[0], n2.children && n2.children[0], n1.children, n2.children];
+
+      if (JSON.stringify(ocs) !== JSON.stringify(ncs)) {
+        setChildrenNode(ncs, patchChildrenNodes, el);
+      }
+
+      function patchChildrenNodes() {
+        if (getType(oc) === 'array' && getType(nc) === 'array') {
+          patchNode(oc, nc, el, status);
+        } else if (getType(oc) !== 'array' && getType(nc) === 'array') {
+          el.innerHTML = '';
+          nc.forEach((c) => mount(c, el));
+        } else {
+          patchNode(ocs, ncs, el, status);
+        }
+      }
     }
   }
 }
@@ -273,7 +282,7 @@ function patchNode(o, n, el, status) {
     }
   } else {
     for (let i = 0; i < Math.min(o.length, n.length); i++) {
-      patch(o[i], n[i]);
+      patch(o[i], n[i], status);
     }
     if (n.length > o.length) {
       n.slice(o.length).forEach((c) => mount(c, el));
@@ -285,29 +294,41 @@ function patchNode(o, n, el, status) {
   }
 }
 
+function setFragmentNode(dom) {
+  return {
+    tag: 'fragment',
+    props: null,
+    children: dom
+  }
+}
+
 function mountNode(dom, selector, status) {
   if (!state.isMounted) {
-    mount((state.oldTree = dom), document.querySelector(selector));
+    const _template = !dom.tag ? setFragmentNode(dom) : dom;
+    mount(_template, document.querySelector(selector));
+    state.oldTree = _template;
     state.isMounted = true;
   } else {
-    const newTree = dom;
+    let newTree = null;
+    newTree = !dom.tag ? setFragmentNode(dom) : dom;
     patch(state.oldTree, newTree, status);
     state.oldTree = newTree;
   }
 }
 
 function updateView(callback, status) {
-  if (typeof callback === 'function' && typeof Promise !== 'undefined') {
+  if (getType(callback) === 'function' && getType(Promise) !== 'undefined') {
     return Promise.resolve().then(() => {
       callback();
     }).then(() => {
+      const _template = useTemplate(state._template());
       if (status === 'useRouter') {
         document.querySelector(state._el).innerHTML = '';
-        mount((state.oldTree = state._template()), document.querySelector(state._el));
+        mount((state.oldTree = _template), document.querySelector(state._el));
       } else {
-        mountNode(state._template(), state._el, status);
+        mountNode(_template, state._el, status);
       }
-    }).catch((err) => console.error(err));
+    }).catch((err) => console.error(err))
   }
 }
 
