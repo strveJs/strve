@@ -1,3 +1,9 @@
+## 2.3.3 (2022-02-20)
+
+### Features
+
+- Parameter adjustment of `Strve` API;
+
 ## 2.3.2 (2022-02-19)
 
 ### Features

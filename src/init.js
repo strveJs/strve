@@ -1,10 +1,10 @@
-// version:2.3.2
+// version:2.3.3
 
 import {
     mountNode
 } from './diff.js';
 
-const strveVersion = '2.3.2';
+const strveVersion = '2.3.3';
 
 const state = {
     _el: null,
@@ -118,11 +118,12 @@ function useTemplate(template) {
     }
 }
 
-function Strve(el, v) {
+function Strve(el, template) {
     if (el) {
-        [state._el, state._template] = [el, v.template];
-        const template = useTemplate(v.template());
-        mountNode(template, el);
+        state._el = el;
+        state._template = template;
+        const tem = useTemplate(template());
+        mountNode(tem, el);
     } else {
         console.error('[Strve warn]: There must be a mount element node.');
     }

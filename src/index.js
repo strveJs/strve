@@ -1,5 +1,5 @@
 /*!
- * Strve.js v2.3.2
+ * Strve.js v2.3.3
  * (c) 2021-2022 maomincoding
  * Released under the MIT License.
  */
