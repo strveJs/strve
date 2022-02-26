@@ -1,15 +1,14 @@
-// version:2.3.3
+// version:2.3.4
 
 import {
     mountNode
 } from './diff.js';
 
-const strveVersion = '2.3.3';
+const strveVersion = '2.3.4';
 
 const state = {
     _el: null,
     _template: null,
-    kTemplate: null,
     oldTree: null,
     isMounted: false,
     observer: null
@@ -118,6 +117,27 @@ function useTemplate(template) {
     }
 }
 
+const isComplexDataType = obj => (typeof obj === 'object' || typeof obj === 'function') && (obj !== null);
+
+function deepCloneData(obj, hash = new WeakMap()) {
+    if (obj.constructor === Date)
+        return new Date(obj)
+    if (obj.constructor === RegExp)
+        return new RegExp(obj)
+    if (hash.has(obj)) return hash.get(obj)
+
+    let allDesc = Object.getOwnPropertyDescriptors(obj);
+
+    let cloneObj = Object.create(Object.getPrototypeOf(obj), allDesc);
+
+    hash.set(obj, cloneObj);
+
+    for (let key of Reflect.ownKeys(obj)) {
+        cloneObj[key] = (isComplexDataType(obj[key]) && typeof obj[key] !== 'function') ? deepCloneData(obj[key], hash) : obj[key]
+    }
+    return cloneObj
+}
+
 function Strve(el, template) {
     if (el) {
         state._el = el;
@@ -130,6 +150,7 @@ function Strve(el, template) {
 }
 
 export {
+    deepCloneData,
     watchDOMChange,
     makeMap,
     checkVnode,
