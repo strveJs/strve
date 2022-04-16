@@ -1,162 +1,90 @@
-// version:2.3.4
-
-import {
-    mountNode
-} from './diff.js';
-
-const strveVersion = '2.3.4';
-
-const state = {
+// Version:3.0.0
+import { mountNode } from './diff';
+import { getType, isToTextType, checkVnode } from './util';
+export const version = '3.0.0';
+export const state = {
     _el: null,
     _template: null,
     oldTree: null,
     isMounted: false,
-    observer: null
+    observer: null,
 };
-
-// Before using this API, confirm whether the browser is compatible
-function watchDOMChange(el, config, fn) {
-    if (el) {
-        const elNode = document.querySelector(el);
-        if (state.observer === null) {
-            state.observer = new MutationObserver(fn);
-        }
-        return {
-            start() {
-                state.observer.observe(elNode, config);
-            },
-            stop() {
-                let records = state.observer.takeRecords();
-                state.observer.disconnect();
-                if (getType(records) === 'array' && records.length === 0) {
-                    state.observer = null;
-                }
-            }
-        }
-    } else {
-        console.error('[Strve warn]: Please check whether the element exists or need to put watchDOMChange on the mount node.')
-    }
-}
-
-function getType(v) {
-    return Object.prototype.toString.call(v).match(/\[object (.+?)\]/)[1].toLowerCase()
-}
-
-// Object and array is not supported,But you can use JSON.stringify() to convert it to string type
-const isToTextType = makeMap('function,regexp,date,math,undefined,null,boolean,string,number,symbol,bigInt');
-
-function makeMap(str) {
-    const map = Object.create(null);
-    const list = str.split(',');
-    for (let i = 0; i < list.length; i++) {
-        map[list[i]] = true;
-    }
-    return function (val) {
-        return map[val]
-    }
-}
-
-function isVnode(vnodes) {
-    if (vnodes.hasOwnProperty('tag') && vnodes.hasOwnProperty('props') && vnodes.hasOwnProperty('children')) {
-        return true
-    }
-}
-
-function checkVnode(vnodes) {
-    if (getType(vnodes) === 'array') {
-        for (let index = 0; index < vnodes.length; index++) {
-            if (isVnode(vnodes[index])) {
-                return true
-            }
-        }
-    } else if (getType(vnodes) === 'object') {
-        return isVnode(vnodes)
-    }
-}
-
 function useOtherNode(template) {
     for (let index = 0; index < template.length; index++) {
         const element = template[index];
-
         if (getType(element) === 'array') {
             useOtherNode(element);
         }
-
         if (element === '') {
             template.splice(index, 1, {
                 tag: 'comment',
                 children: [],
-                props: null
-            })
-        } else if (isToTextType(getType(element))) {
+                props: null,
+            });
+        }
+        else if (isToTextType(getType(element))) {
             template.splice(index, 1, {
                 tag: 'textnode',
                 children: [element],
-                props: null
-            })
-        } else if (element.children && checkVnode(element.children)) {
+                props: null,
+            });
+        }
+        else if (element.children && checkVnode(element.children)) {
             useOtherNode(element.children);
         }
-
     }
-    return template
+    return template;
 }
-
-function useTemplate(template) {
+export function useTemplate(template) {
     if (getType(template) === 'array') {
-        return useOtherNode(template)
-    } else if (checkVnode(template) && getType(template) === 'object') {
+        return useOtherNode(template);
+    }
+    else if (checkVnode(template) && getType(template) === 'object') {
         template.children = useOtherNode(template.children);
-        return template
-    } else {
+        return template;
+    }
+    else {
         return {
             tag: 'textnode',
             children: [template],
-            props: null
+            props: null,
+        };
+    }
+}
+function normalizeContainer(container) {
+    if (typeof container === 'string') {
+        const res = document.querySelector(container);
+        if (!res) {
+            console.warn(`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`);
         }
+        return res;
+    }
+    else if (window.ShadowRoot &&
+        container instanceof window.ShadowRoot &&
+        container.mode === 'closed') {
+        console.warn(`[Strve warn]: mounting on a ShadowRoot with \`{mode: "closed"}\` may lead to unpredictable bugs.`);
+        return null;
+    }
+    else if (container instanceof HTMLElement) {
+        return container;
+    }
+    else {
+        return null;
     }
 }
-
-const isComplexDataType = obj => (typeof obj === 'object' || typeof obj === 'function') && (obj !== null);
-
-function deepCloneData(obj, hash = new WeakMap()) {
-    if (obj.constructor === Date)
-        return new Date(obj)
-    if (obj.constructor === RegExp)
-        return new RegExp(obj)
-    if (hash.has(obj)) return hash.get(obj)
-
-    let allDesc = Object.getOwnPropertyDescriptors(obj);
-
-    let cloneObj = Object.create(Object.getPrototypeOf(obj), allDesc);
-
-    hash.set(obj, cloneObj);
-
-    for (let key of Reflect.ownKeys(obj)) {
-        cloneObj[key] = (isComplexDataType(obj[key]) && typeof obj[key] !== 'function') ? deepCloneData(obj[key], hash) : obj[key]
-    }
-    return cloneObj
-}
-
-function Strve(el, template) {
-    if (el) {
-        state._el = el;
-        state._template = template;
-        const tem = useTemplate(template());
-        mountNode(tem, el);
-    } else {
-        console.error('[Strve warn]: There must be a mount element node.');
-    }
-}
-
-export {
-    deepCloneData,
-    watchDOMChange,
-    makeMap,
-    checkVnode,
-    useTemplate,
-    state,
-    getType,
-    strveVersion,
-    Strve
+export function createApp(template) {
+    const app = {
+        mount(el) {
+            if (normalizeContainer(el)) {
+                state._el = normalizeContainer(el);
+                state._template = template;
+                const tem = useTemplate(template());
+                state._el && mountNode(tem, state._el);
+            }
+            else {
+                console.warn('[Strve warn]: There must be a mount element node.');
+            }
+        },
+    };
+    return app;
 }

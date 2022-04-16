@@ -1,13 +1,19 @@
 {
   "name": "strvejs",
-  "version": "2.3.4",
+  "version": "2.9.0-beta",
   "description": "A JS library that can convert strings into view",
   "main": "dist/strve.esm.js",
   "module": "dist/strve.esm.js",
   "unpkg": "dist/strve.esm.js",
   "jsdelivr": "dist/strve.esm.js",
+  "typings": "types/index.d.ts",
   "files": [
-    "dist/*.js"
+    "dist/*.js",
+    "types/compile.d.ts",
+    "types/diff.d.ts",
+    "types/index.d.ts",
+    "types/init.d.ts",
+    "types/util.d.ts"
   ],
   "scripts": {
     "build": "rollup -c"
