@@ -1,6 +1,6 @@
 {
   "name": "strvejs",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A JS library that can convert strings into view",
   "main": "dist/strve.esm.js",
   "module": "dist/strve.esm.js",
