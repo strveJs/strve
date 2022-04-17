@@ -1,4 +1,4 @@
-export interface setDataOptionsType {
+interface setDataOptionsType {
     status: string;
     name: Function;
 }
@@ -10,3 +10,4 @@ export interface vnodeType {
 }
 export declare function mountNode(dom: vnodeType, selector: HTMLElement, status?: string, name?: string): void;
 export declare function setData(callback: Function, options: setDataOptionsType): Promise<void>;
+export {};

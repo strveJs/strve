@@ -1,4 +1,3 @@
-export declare const version: string;
 interface StateType {
     _el: HTMLElement | null;
     _template: Function | null;
@@ -6,6 +5,7 @@ interface StateType {
     isMounted: boolean;
     observer: MutationObserver | null;
 }
+export declare const version: string;
 export declare const state: StateType;
 export declare function useTemplate(template: any): any;
 export declare function createApp(template: Function): {

@@ -1,7 +1,33 @@
+## v3.0.0 (2022-4-17)
+
+### Features
+
+- Modify API:
+
+  | Old API          | New API     |
+  | ---------------- | ----------- |
+  | `Strve`          | `createApp` |
+  | `render`         | `h`         |
+  | `updateView`     | `setData`   |
+  | `watchDOMChange` | `watchDom`  |
+  | `emitEvent`      | `emit`      |
+  | `strveVersion`   | `version`   |
+  | `deepCloneData`  | `clone`     |
+
+- Adjust `createApp` API;
+- `useFkey` tag changed to `useFirstKey`;
+- add tags `$key`, `$name`;
+- Add component tag `<component>`, empty node tag `<null>`;
+- Adjust `setData` API;
+- Optimize the Diff algorithm;
+- TypeScript refactoring code;
+
 ## 2.3.4 (2022-02-26)
+
 ### Features
 
 - Added data deep copy API `deepCloneData`;
+
 ## 2.3.3 (2022-02-20)
 
 ### Features
@@ -21,17 +47,20 @@
 - Added support for HTML template string highlighting (VSCode editor needs to install `es6-string-html` plugin);
 - Remove the `data` attribute parameter of the `Strve` API;
 - View templates support Class writing;
+
 ## 2.3.1 (2022-02-08)
 
 ### Features
 
 - Modify some error prompts;
+
 ## 2.3.0 (2022-02-08)
 
 ### Features
 
-- Add version number ` strveversion ` API;
+- Add version number `strveversion` API;
 - Modify the internal logic of the `updateview` API;
+
 ## 2.2.0 (2022-02-05)
 
 ### Features
@@ -39,6 +68,7 @@
 - Support SVG elements;
 - Optimize internal diff algorithm;
 - Add necessary error prompt;
+
 ## 2.1.0 (2022-01-25)
 
 ### Features
@@ -53,13 +83,9 @@
 - Inserting data into the head of the list needs to bind the `useFkey` field to avoid repeated rendering of the `DOM` node;
 
 - Hide the `DOM` node event method after rendering;
-   
 - Bind the `Style` style (object);
-   
 - The binding properties are uniformly bound using the `${}` symbol;
-   
 - Support HTML template string highlighting (VSCode editor needs to install `comment-tagged-templates` plugin);
-   
 - Support parent and child components to pass values to each other;
 
 - Adapt to Bootstrap5、Tailwindcss UI framework;

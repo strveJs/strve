@@ -25,6 +25,49 @@ Strve.js is not only easy to use, but also flexible to disassemble different cod
 
 Strve.js is another lightweight MVVM framework, you only need to care about the data and how to operate it, and leave the rest to Strve.js for internal processing. Strve.js first converts the template string into a virtual DOM, and then performs the Diff algorithm to update the real DOM by comparing the state differences between the two before and after. This is also the solution used by many frameworks to improve browser performance, but Strve.js is more lightweight.
 
+## Started
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Strve.js</title>
+	</head>
+
+	<body>
+		<div id="app"></div>
+		<script type="module">
+			import {
+				h,
+				createApp,
+				setData,
+			} from 'https://cdn.jsdelivr.net/npm/strvejs/dist/strve.esm.min.js';
+
+			const state = {
+				count: 0,
+			};
+
+			function App() {
+				return h/*html*/ `
+                <h1 $key class="txt">${state.count}</h1>
+                <button onClick=${add}>Add</button> 
+        `;
+			}
+
+			function add() {
+				setData(() => {
+					state.count++;
+				});
+			}
+
+			const app = createApp(App);
+			app.mount('#app');
+		</script>
+	</body>
+</html>
+```
+
 ## Documentation
 
 To learn more about Strve, check [its documentation](https://maomincoding.github.io/strvejs-doc/).

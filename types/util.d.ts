@@ -1,11 +1,8 @@
-import { vnodeType } from './diff';
-export interface namespaceMapType {
-    [key: string]: string;
-}
-export interface HTMLElementElType {
+import { vnodeType } from './diff.js';
+interface HTMLElementElType {
     [style: string]: any;
 }
-export interface fragmentType {
+interface fragmentType {
     tag: string;
     props: null;
     children: any;
@@ -33,3 +30,4 @@ export declare function watchDom(el: string, config: object, fn: MutationCallbac
     stop(): void;
 };
 export declare function clone(obj: any, hash?: WeakMap<object, any>): any;
+export {};
