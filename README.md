@@ -30,41 +30,41 @@ Strve.js is another lightweight MVVM framework, you only need to care about the 
 ```html
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Strve.js</title>
+	</head>
 
-<head>
-    <meta charset="UTF-8" />
-    <title>Strve.js</title>
-</head>
+	<body>
+		<div id="app"></div>
+		<script type="module">
+			import {
+				h,
+				createApp,
+				setData,
+			} from 'https://cdn.jsdelivr.net/npm/strvejs@3.1.0/dist/strve.esm.min.js';
 
-<body>
-    <div id="app"></div>
-    <script type="module">
-        import {
-            h, createApp, setData
-        } from 'https://cdn.jsdelivr.net/npm/strvejs@3.0.1/dist/strve.esm.min.js';
+			const state = {
+				count: 0,
+			};
 
-        const state = {
-            count: 0,
-        };
+			function App() {
+				return h`
+                    <h1 $key>${state.count}</h1>
+                    <button onClick=${add}>Add</button> 
+                `;
+			}
 
-        function App() {
-            return h`
-            <h1 $key>${state.count}</h1>
-            <button onClick=${add}>Add</button> 
-        `;
-        }
+			function add() {
+				setData(() => {
+					state.count++;
+				});
+			}
 
-        function add() {
-            setData(() => {
-                state.count++;
-            });
-        }
-
-        const app = createApp(App);
-        app.mount('#app');
-    </script>
-</body>
-
+			const app = createApp(App);
+			app.mount('#app');
+		</script>
+	</body>
 </html>
 ```
 

@@ -1,4 +1,4 @@
-// Version:3.0.2
+// Version:3.1.0
 
 function vnode(tag, props, ...children) {
 	return {
