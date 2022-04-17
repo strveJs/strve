@@ -1,4 +1,4 @@
-// Version:3.0.0
+// Version:3.0.2
 
 import { state } from './init.js';
 import { vnodeType } from './diff.js';

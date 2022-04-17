@@ -1,4 +1,4 @@
-// Version:3.0.0
+// Version:3.0.2
 
 import { mountNode } from './diff.js';
 import { getType, isToTextType, checkVnode } from './util.js';
@@ -11,7 +11,7 @@ interface StateType {
 	observer: MutationObserver | null;
 }
 
-export const version: string = '3.0.0';
+export const version: string = '3.0.2';
 
 export const state: StateType = {
 	_el: null,

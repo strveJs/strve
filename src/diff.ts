@@ -1,4 +1,4 @@
-// Version:3.0.0
+// Version:3.0.2
 
 import { state, useTemplate } from './init.js';
 import {
@@ -102,10 +102,8 @@ function patch(n1: vnodeType, n2: vnodeType, status: string) {
 	if (isHasFlag(oldProps, flag[0]) && n1.tag !== n2.tag) {
 		const parent = n1.el.parentNode;
 		const anchor = n1.el.nextSibling;
-		if (parent) {
-			parent.removeChild(n1.el);
-			anchor && mount(n2, parent, anchor);
-		}
+		parent.removeChild(n1.el);
+		mount(n2, parent, anchor);
 	} else {
 		let el: null | HTMLElement | any = null;
 		if (isHasFlag(oldProps, flag[0])) {
@@ -190,7 +188,7 @@ function patchNode(o: any[], n: any[], el: HTMLElement, status: string) {
 			n.slice(o.length).forEach((c: vnodeType) => mount(c, el));
 		} else if (o.length > n.length) {
 			o.slice(n.length).forEach((c: vnodeType) => {
-				c.el && el.removeChild(c.el);
+				el.removeChild(c.el);
 			});
 		}
 	}
