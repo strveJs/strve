@@ -6,6 +6,7 @@
 - Added `onMounted`, `onUnmounted`, `nextTick`Hook;
 - remove `emit` API;
 - Added `$props` tag;
+- Added iife file format, an automatic function, suitable as `<script>` tag;
 
 ## v3.1.0 (2022-04-17)
 
