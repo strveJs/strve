@@ -4,7 +4,7 @@ export default {
 	input: './lib/index.js',
 	output: {
 		file: './dist/strve.esm.js',
-		format: 'esm',
+		format: 'esm', // iife
 	},
 	plugins: [terser()],
 };
