@@ -1,6 +1,6 @@
-// Version:3.1.0
+// Version:3.2.0
 
-import { mountNode } from './diff.js';
+import { mountNode, vnodeType } from './diff.js';
 import { getType, isToTextType, checkVnode } from './util.js';
 
 interface StateType {
@@ -11,7 +11,7 @@ interface StateType {
 	observer: MutationObserver | null;
 }
 
-export const version: string = '3.1.0';
+export const version: string = '3.2.0';
 
 export const state: StateType = {
 	_el: null,
@@ -21,7 +21,7 @@ export const state: StateType = {
 	observer: null,
 };
 
-function useOtherNode(template: any) {
+function useOtherNode(template: any): vnodeType {
 	for (let index: number = 0; index < template.length; index++) {
 		const element: any = template[index];
 
@@ -48,7 +48,7 @@ function useOtherNode(template: any) {
 	return template;
 }
 
-export function useTemplate(template: any) {
+export function useTemplate(template: any): vnodeType {
 	if (getType(template) === 'array') {
 		return useOtherNode(template);
 	} else if (checkVnode(template) && getType(template) === 'object') {
@@ -69,11 +69,24 @@ function normalizeContainer(
 	if (typeof container === 'string') {
 		const res: HTMLElement = document.querySelector(container);
 		if (!res) {
-			console.warn(
-				`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`
-			);
+			let elem = null;
+			if (container.startsWith('#')) {
+				elem = document.createElement('div');
+				elem.setAttribute('id', container.substring(1, container.length));
+			} else if (container.startsWith('.')) {
+				elem = document.createElement('div');
+				elem.setAttribute('class', container.substring(1, container.length));
+			} else {
+				`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`;
+			}
+
+			document.body.insertAdjacentElement('afterbegin', elem);
+
+			return elem;
 		}
 		return res;
+	} else if (container instanceof HTMLElement) {
+		return container;
 	} else if (
 		window.ShadowRoot &&
 		container instanceof window.ShadowRoot &&
@@ -83,14 +96,14 @@ function normalizeContainer(
 			`[Strve warn]: mounting on a ShadowRoot with \`{mode: "closed"}\` may lead to unpredictable bugs.`
 		);
 		return null;
-	} else if (container instanceof HTMLElement) {
-		return container;
 	} else {
 		return null;
 	}
 }
 
-export function createApp(template: Function) {
+export function createApp(template: Function): {
+	mount(el: HTMLElement | String): void;
+} {
 	const app = {
 		mount(el: HTMLElement | String) {
 			if (normalizeContainer(el)) {

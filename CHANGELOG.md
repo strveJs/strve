@@ -1,3 +1,12 @@
+## v3.2.0 (2022-07-19)
+
+### Features
+
+- Add `domInfo`, `propsData` API;
+- Added `onMounted`, `onUnmounted`, `nextTick`Hook;
+- remove `emit` API;
+- Added `$props` tag;
+
 ## v3.1.0 (2022-04-17)
 
 ### Features

@@ -1,3 +1,4 @@
+import { vnodeType } from './diff.js';
 interface StateType {
     _el: HTMLElement | null;
     _template: Function | null;
@@ -7,7 +8,7 @@ interface StateType {
 }
 export declare const version: string;
 export declare const state: StateType;
-export declare function useTemplate(template: any): any;
+export declare function useTemplate(template: any): vnodeType;
 export declare function createApp(template: Function): {
     mount(el: HTMLElement | String): void;
 };

@@ -1,4 +1,4 @@
-// Version:3.1.0
+// Version:3.2.0
 
 import { state } from './init.js';
 import { vnodeType } from './diff.js';
@@ -17,7 +17,7 @@ interface fragmentType {
 	children: any;
 }
 
-const isHTMLTag = makeMap(
+const isHTMLTag: (val: string) => boolean = makeMap(
 	'html,body,base,head,link,meta,style,title,' +
 		'address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,' +
 		'div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,' +
@@ -31,7 +31,7 @@ const isHTMLTag = makeMap(
 		'content,element,shadow,template,blockquote,iframe,tfoot'
 );
 
-const isSVG = makeMap(
+const isSVG: (val: string) => boolean = makeMap(
 	'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
 		'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
 		'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
@@ -41,16 +41,16 @@ const isSVG = makeMap(
 		'animateTransform,animateMotion'
 );
 
-export function isXlink(name: string) {
+export function isXlink(name: string): boolean {
 	return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
 }
 
-export function isComplexType(v: any) {
+export function isComplexType(v: any): boolean {
 	const typeData = ['object', 'array', 'function', 'regexp', 'date', 'math'];
 	return typeData.indexOf(getType(v)) !== -1;
 }
 
-export function getType(v: any) {
+export function getType(v: any): string {
 	return Object.prototype.toString
 		.call(v)
 		.match(/\[object (.+?)\]/)[1]
@@ -58,22 +58,22 @@ export function getType(v: any) {
 }
 
 // Object and array is not supported,But you can use JSON.stringify() to convert it to string type
-export const isToTextType = makeMap(
+export const isToTextType: (val: string) => boolean = makeMap(
 	'function,regexp,date,math,undefined,null,boolean,string,number,symbol,bigInt'
 );
 
-function makeMap(str: string) {
-	const map = Object.create(null);
-	const list = str.split(',');
+function makeMap(str: string): (val: string) => boolean {
+	const map: any = Object.create(null);
+	const list: string[] = str.split(',');
 	for (let i = 0; i < list.length; i++) {
 		map[list[i]] = true;
 	}
-	return function (val: any) {
+	return function (val: string) {
 		return map[val];
 	};
 }
 
-export function isVnode(vnodes: vnodeType) {
+export function isVnode(vnodes: vnodeType): boolean {
 	if (
 		vnodes.hasOwnProperty('tag') &&
 		vnodes.hasOwnProperty('props') &&
@@ -83,11 +83,7 @@ export function isVnode(vnodes: vnodeType) {
 	}
 }
 
-export function isHasFlag(props: object, flag: string) {
-	return props && props.hasOwnProperty(flag);
-}
-
-export function checkVnode(vnodes: any) {
+export function checkVnode(vnodes: any): boolean {
 	if (getType(vnodes) === 'array') {
 		for (let index = 0; index < vnodes.length; index++) {
 			if (isVnode(vnodes[index])) {
@@ -99,7 +95,7 @@ export function checkVnode(vnodes: any) {
 	}
 }
 
-export function isSameObject(obj1: any, obj2: any) {
+export function isSameObject(obj1: any, obj2: any): boolean {
 	if (!isComplexDataType(obj1) || !isComplexDataType(obj2)) {
 		return obj1 === obj2;
 	}
@@ -130,13 +126,13 @@ const namespaceMap: namespaceMapType = {
 	math: 'http://www.w3.org/1998/Math/MathML',
 };
 
-export const xlinkNS = 'http://www.w3.org/1999/xlink';
+export const xlinkNS: string = 'http://www.w3.org/1999/xlink';
 
-function getXlinkProp(name: string) {
+function getXlinkProp(name: string): string {
 	return isXlink(name) ? name.slice(6, name.length) : '';
 }
 
-function getTagNamespace(tag: string) {
+function getTagNamespace(tag: string): string {
 	if (isSVG(tag)) {
 		return 'svg';
 	}
@@ -146,17 +142,17 @@ function getTagNamespace(tag: string) {
 	}
 }
 
-function createElementNS(namespace: string, tagName: string) {
+function createElementNS(namespace: string, tagName: string): Element {
 	return document.createElementNS(namespaceMap[namespace], tagName);
 }
 
-export function setStyleProp(el: HTMLElementElType, prototype: any) {
+export function setStyleProp(el: HTMLElementElType, prototype: any): void {
 	for (let i in prototype) {
 		el.style[i] = prototype[i];
 	}
 }
 
-export function addEvent(el: HTMLElement, props: any) {
+export function addEvent(el: HTMLElement, props: any): void {
 	for (let index = 0; index < Object.keys(props).length; index++) {
 		const element = Object.keys(props)[index].toString();
 		if (element.startsWith('on')) {
@@ -168,7 +164,7 @@ export function addEvent(el: HTMLElement, props: any) {
 	}
 }
 
-export function removeEvent(el: HTMLElement, key: string, oldProps: any) {
+export function removeEvent(el: HTMLElement, key: string, oldProps: any): void {
 	if (isXlink(key)) {
 		el.removeAttributeNS(xlinkNS, getXlinkProp(key));
 	} else {
@@ -182,7 +178,7 @@ export function removeEvent(el: HTMLElement, key: string, oldProps: any) {
 	}
 }
 
-export function createNode(tag: string) {
+export function createNode(tag: string): Element | DocumentFragment | Comment {
 	if (isHTMLTag(tag)) {
 		return document.createElement(tag);
 	} else if (isSVG(tag)) {
@@ -196,7 +192,7 @@ export function createNode(tag: string) {
 	}
 }
 
-function setFragmentNode(dom: any) {
+function setFragmentNode(dom: any): vnodeType {
 	const fragment: fragmentType = {
 		tag: 'fragment',
 		props: null,
@@ -205,7 +201,7 @@ function setFragmentNode(dom: any) {
 	return fragment;
 }
 
-export function useFragmentNode(dom: vnodeType) {
+export function useFragmentNode(dom: vnodeType): vnodeType {
 	return !dom.tag ? setFragmentNode(dom) : dom;
 }
 
@@ -213,15 +209,15 @@ export function useFragmentNode(dom: vnodeType) {
  * API
  */
 
-export function emit(eventName: string, data: object, el: string) {
-	const customEvent = new CustomEvent(eventName, data);
-	if (customEvent && el) {
-		document.querySelector(el).dispatchEvent(customEvent);
-	}
-}
-
 // Before using this API, confirm whether the browser is compatible
-export function watchDom(el: string, config: object, fn: MutationCallback) {
+export function watchDom(
+	el: string,
+	config: object,
+	fn: MutationCallback
+): {
+	start(): void;
+	stop(): void;
+} {
 	if (el) {
 		const elNode = document.querySelector(el);
 		if (state.observer === null) {
@@ -247,10 +243,10 @@ export function watchDom(el: string, config: object, fn: MutationCallback) {
 	}
 }
 
-const isComplexDataType = (obj: any) =>
+const isComplexDataType: (obj: any) => boolean = (obj: any) =>
 	(typeof obj === 'object' || typeof obj === 'function') && obj !== null;
 
-export function clone(obj: any, hash = new WeakMap()) {
+export function clone(obj: any, hash = new WeakMap()): any {
 	if (obj.constructor === Date) return new Date(obj);
 	if (obj.constructor === RegExp) return new RegExp(obj);
 	if (hash.has(obj)) return hash.get(obj);
