@@ -1,5 +1,5 @@
 /*!
- * Strve.js v4.2.0
+ * Strve.js v4.3.0
  * (c) 2021-2022 maomincoding
  * Released under the MIT License.
  */
@@ -9,6 +9,7 @@ interface setDataOptionsType {
 }
 export function h(s: any, ...args: any[]): any;
 export declare let propsData: any;
+export declare const domInfo: any;
 export declare function onMounted(fn: Function): void;
 export declare function onUnmounted(fn: Function): void;
 export declare function nextTick(fn: Function): void;
