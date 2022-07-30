@@ -1,4 +1,4 @@
-// Version:4.1.0
+// Version:4.2.0
 
 import { state } from './init.js';
 import { vnodeType } from './diff.js';
@@ -205,63 +205,5 @@ export function useFragmentNode(dom: vnodeType): vnodeType {
 	return !dom.tag ? setFragmentNode(dom) : dom;
 }
 
-/**
- * API
- */
-
-// Before using this API, confirm whether the browser is compatible
-export function watchDom(
-	el: string,
-	config: object,
-	fn: MutationCallback
-): {
-	start(): void;
-	stop(): void;
-} {
-	if (el) {
-		const elNode = document.querySelector(el);
-		if (state.observer === null) {
-			state.observer = new MutationObserver(fn);
-		}
-
-		return {
-			start() {
-				state.observer && state.observer.observe(elNode, config);
-			},
-			stop() {
-				let records = state.observer.takeRecords();
-				state.observer.disconnect();
-				if (getType(records) === 'array' && records.length === 0) {
-					state.observer = null;
-				}
-			},
-		};
-	} else {
-		console.error(
-			'[Strve warn]: Please check whether the element exists or need to put watchDOMChange on the mount node.'
-		);
-	}
-}
-
 const isComplexDataType: (obj: any) => boolean = (obj: any) =>
 	(typeof obj === 'object' || typeof obj === 'function') && obj !== null;
-
-export function clone(obj: any, hash = new WeakMap()): any {
-	if (obj.constructor === Date) return new Date(obj);
-	if (obj.constructor === RegExp) return new RegExp(obj);
-	if (hash.has(obj)) return hash.get(obj);
-
-	const allDesc = Object.getOwnPropertyDescriptors(obj);
-
-	const cloneObj = Object.create(Object.getPrototypeOf(obj), allDesc);
-
-	hash.set(obj, cloneObj);
-
-	for (let key of Reflect.ownKeys(obj)) {
-		cloneObj[key] =
-			isComplexDataType(obj[key]) && typeof obj[key] !== 'function'
-				? clone(obj[key], hash)
-				: obj[key];
-	}
-	return cloneObj;
-}

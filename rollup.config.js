@@ -1,10 +1,10 @@
 import { terser } from 'rollup-plugin-terser';
 
 export default {
-	input: './lib/index.js', // ./lib/index.js ./dist/strve.iife.js
+	input: './dist/strve.iife.js', // ./lib/index.js ./dist/strve.iife.js
 	output: {
-		file: './dist/strve.esm.js',
-		format: 'esm', // iife esm
+		file: './dist/strve.iife.js',
+		format: 'iife', // iife esm
 	},
 	plugins: [terser()],
 };

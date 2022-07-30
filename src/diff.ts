@@ -1,4 +1,4 @@
-// Version:4.1.0
+// Version:4.2.0
 
 import { state, useTemplate } from './init.js';
 import {
@@ -31,7 +31,7 @@ const _com_: any = Object.create(null);
 const _components: WeakMap<object, any> = new WeakMap();
 const flag: Array<string> = ['$key', '$name', '$props'];
 let componentName: string = '';
-export const domInfo: any = Object.create(null);
+const domInfo: any = Object.create(null);
 export let propsData: any = reactive(Object.create(null));
 
 interface proxyConfType {
