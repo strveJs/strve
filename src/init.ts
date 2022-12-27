@@ -1,7 +1,5 @@
-// Version:4.3.0
-
-import { mountNode, vnodeType } from './diff.js';
-import { getType, isToTextType, checkVnode } from './util.js';
+import { mountNode, vnodeType } from './diff';
+import { getType, isToTextType, checkVnode } from './util';
 
 interface StateType {
 	_el: HTMLElement | null;
@@ -11,7 +9,7 @@ interface StateType {
 	observer: MutationObserver | null;
 }
 
-export const version: string = '4.3.0';
+export const version: string = '4.5.0';
 
 export const state: StateType = {
 	_el: null,
@@ -20,48 +18,6 @@ export const state: StateType = {
 	isMounted: false,
 	observer: null,
 };
-
-function useOtherNode(template: any): vnodeType {
-	for (let index: number = 0; index < template.length; index++) {
-		const element: any = template[index];
-
-		if (getType(element) === 'array') {
-			useOtherNode(element);
-		}
-
-		if (element === '') {
-			template.splice(index, 1, {
-				tag: 'comment',
-				children: [],
-				props: null,
-			});
-		} else if (isToTextType(getType(element))) {
-			template.splice(index, 1, {
-				tag: 'textnode',
-				children: [element],
-				props: null,
-			});
-		} else if (element.children && checkVnode(element.children)) {
-			useOtherNode(element.children);
-		}
-	}
-	return template;
-}
-
-export function useTemplate(template: any): vnodeType {
-	if (getType(template) === 'array') {
-		return useOtherNode(template);
-	} else if (checkVnode(template) && getType(template) === 'object') {
-		template.children = useOtherNode(template.children);
-		return template;
-	} else {
-		return {
-			tag: 'textnode',
-			children: [template],
-			props: null,
-		};
-	}
-}
 
 function normalizeContainer(
 	container: HTMLElement | String
@@ -77,7 +33,9 @@ function normalizeContainer(
 				elem = document.createElement('div');
 				elem.setAttribute('class', container.substring(1, container.length));
 			} else {
-				`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`;
+				console.warn(
+					`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`
+				);
 			}
 
 			document.body.insertAdjacentElement('afterbegin', elem);
@@ -107,9 +65,9 @@ export function createApp(template: Function): {
 	const app = {
 		mount(el: HTMLElement | String) {
 			if (normalizeContainer(el)) {
-				state._el = normalizeContainer(el);
+				const tem = template();
 				state._template = template;
-				const tem = useTemplate(template());
+				state._el = normalizeContainer(el);
 				state._el && mountNode(tem, state._el);
 			} else {
 				console.warn('[Strve warn]: There must be a mount element node.');

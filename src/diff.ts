@@ -1,6 +1,4 @@
-// Version:4.3.0
-
-import { state, useTemplate } from './init.js';
+import { state } from './init';
 import {
 	getType,
 	checkVnode,
@@ -14,7 +12,7 @@ import {
 	removeEvent,
 	createNode,
 	useFragmentNode,
-} from './util.js';
+} from './util';
 interface setDataOptionsType {
 	status: string;
 	name: Function;
@@ -335,7 +333,7 @@ export function setData(
 					unMountedHook && unMountedHook();
 					state._el.innerHTML = '';
 					unMountedHook = null;
-					mount((state.oldTree = useTemplate(state._template())), state._el);
+					mount((state.oldTree = state._template()), state._el);
 					mountHook && mountHook();
 				} else if (options && typeof options.name === 'function') {
 					const name: string = options.name.name;
@@ -350,7 +348,7 @@ export function setData(
 				} else {
 					const status: string | null =
 						options && options.status ? options.status : null;
-					mountNode(useTemplate(state._template()), state._el, status);
+					mountNode(state._template(), state._el, status);
 				}
 				nextTickHook && nextTickHook();
 			})

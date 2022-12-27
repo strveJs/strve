@@ -1,6 +1,3 @@
-## v4.3.0 (Latest)
+## v4.5.0 (Beta)
 
-- Add `propsData`、`onMounted`、`onUnmounted`、`nextTick`、`domInfo`API;
-- remove `emit`、`watchDom`、`clone`API;
-- Added `$props` tag;
-- Added iife file format, an automatic function, suitable as `<script>` tag;
+To be released.

@@ -1,11 +1,171 @@
-import { state } from './init';
-import { getType, checkVnode, isComplexType, isXlink, isSameObject, isVnode, xlinkNS, setStyleProp, addEvent, removeEvent, createNode, useFragmentNode, } from './util';
+/*!
+ * Strve.js v4.5.0
+ * (c) 2021-2022 maomincoding
+ * Released under the MIT License.
+ */
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+const HTML_TAGS = 'html,body,base,head,link,meta,style,title,address,article,aside,footer,' +
+    'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
+    'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
+    'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
+    'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
+    'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
+    'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
+    'option,output,progress,select,textarea,details,dialog,menu,' +
+    'summary,template,blockquote,iframe,tfoot';
+// https://developer.mozilla.org/en-US/docs/Web/SVG/Element
+const SVG_TAGS = 'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
+    'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
+    'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
+    'feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur,' +
+    'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
+    'linearGradient,stop,radialGradient,' +
+    'animateTransform,animateMotion';
+const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
+const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
+function isXlink(name) {
+    return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
+}
+function isComplexType(v) {
+    const typeData = ['object', 'array', 'function', 'regexp', 'date', 'math'];
+    return typeData.indexOf(getType(v)) !== -1;
+}
+function getType(v) {
+    return Object.prototype.toString
+        .call(v)
+        .match(/\[object (.+?)\]/)[1]
+        .toLowerCase();
+}
+// Object and array is not supported,But you can use JSON.stringify() to convert it to string type
+makeMap('function,regexp,date,math,undefined,null,boolean,string,number,symbol,bigInt');
+function makeMap(str) {
+    const map = Object.create(null);
+    const list = str.split(',');
+    for (let i = 0; i < list.length; i++) {
+        map[list[i]] = true;
+    }
+    return function (val) {
+        return map[val];
+    };
+}
+function isVnode(vnodes) {
+    if (vnodes.hasOwnProperty('tag') &&
+        vnodes.hasOwnProperty('props') &&
+        vnodes.hasOwnProperty('children')) {
+        return true;
+    }
+}
+function checkVnode(vnodes) {
+    if (getType(vnodes) === 'array') {
+        for (let index = 0; index < vnodes.length; index++) {
+            if (isVnode(vnodes[index])) {
+                return true;
+            }
+        }
+    }
+    else if (getType(vnodes) === 'object') {
+        return isVnode(vnodes);
+    }
+}
+const isComplexDataType = (obj) => (typeof obj === 'object' || typeof obj === 'function') && obj !== null;
+function isSameObject(obj1, obj2) {
+    if (!isComplexDataType(obj1) || !isComplexDataType(obj2)) {
+        return obj1 === obj2;
+    }
+    if (obj1 === obj2) {
+        return true;
+    }
+    const obj1Keys = Object.keys(obj1);
+    const obj2Keys = Object.keys(obj2);
+    if (obj1Keys.length !== obj2Keys.length) {
+        return false;
+    }
+    for (const key in obj1) {
+        const res = isSameObject(obj1[key], obj2[key]);
+        if (!res) {
+            return false;
+        }
+    }
+    return true;
+}
+const namespaceMap = {
+    svg: 'http://www.w3.org/2000/svg',
+    math: 'http://www.w3.org/1998/Math/MathML',
+};
+const xlinkNS = 'http://www.w3.org/1999/xlink';
+function getXlinkProp(name) {
+    return isXlink(name) ? name.slice(6, name.length) : '';
+}
+function getTagNamespace(tag) {
+    if (isSVG(tag)) {
+        return 'svg';
+    }
+    if (tag === 'math') {
+        return 'math';
+    }
+}
+function createElementNS(namespace, tagName) {
+    return document.createElementNS(namespaceMap[namespace], tagName);
+}
+function setStyleProp(el, prototype) {
+    for (let i in prototype) {
+        el.style[i] = prototype[i];
+    }
+}
+function addEvent(el, props) {
+    for (let index = 0; index < Object.keys(props).length; index++) {
+        const element = Object.keys(props)[index].toString();
+        if (element.startsWith('on')) {
+            const name = element.split('on')[1][0].toLowerCase() +
+                element.split('on')[1].substring(1);
+            el.addEventListener(name, props[element]);
+        }
+    }
+}
+function removeEvent(el, key, oldProps) {
+    if (isXlink(key)) {
+        el.removeAttributeNS(xlinkNS, getXlinkProp(key));
+    }
+    else {
+        el.removeAttribute(key);
+    }
+    if (key.startsWith('on')) {
+        const name = key.split('on')[1][0].toLowerCase() + key.split('on')[1].substring(1);
+        el.removeEventListener(name, oldProps[key]);
+    }
+}
+function createNode(tag) {
+    if (isHTMLTag(tag)) {
+        return document.createElement(tag);
+    }
+    else if (isSVG(tag)) {
+        return createElementNS(getTagNamespace(tag), tag);
+    }
+    else if (tag === 'fragment' || tag === 'component') {
+        return document.createDocumentFragment();
+    }
+    else if (tag === 'comment' || tag === 'null') {
+        return document.createComment(tag);
+    }
+}
+function setFragmentNode(dom) {
+    const fragment = {
+        tag: 'fragment',
+        props: null,
+        children: dom,
+    };
+    return fragment;
+}
+function useFragmentNode(dom) {
+    return !dom.tag ? setFragmentNode(dom) : dom;
+}
+
 const _com_ = Object.create(null);
 const _components = new WeakMap();
 const flag = ['$key', '$name', '$props'];
 let componentName = '';
-export const domInfo = Object.create(null);
-export let propsData = reactive(Object.create(null));
+const domInfo = Object.create(null);
+let propsData = reactive(Object.create(null));
 function reactive(target = {}) {
     if (typeof target !== 'object' || target === null) {
         return target;
@@ -231,18 +391,18 @@ function updateTextNode(val, el) {
     }
 }
 let mountHook = null;
-export function onMounted(fn) {
+function onMounted(fn) {
     mountHook = fn;
 }
 let unMountedHook = null;
-export function onUnmounted(fn) {
+function onUnmounted(fn) {
     unMountedHook = fn;
 }
 let nextTickHook = null;
-export function nextTick(fn) {
+function nextTick(fn) {
     nextTickHook = fn;
 }
-export function mountNode(dom, selector, status, name) {
+function mountNode(dom, selector, status, name) {
     if (!state.isMounted) {
         const _template = useFragmentNode(dom);
         mount(_template, selector);
@@ -259,7 +419,7 @@ export function mountNode(dom, selector, status, name) {
         }
     }
 }
-export function setData(callback, options) {
+function setData(callback, options) {
     if (getType(callback) === 'function' && getType(Promise) !== 'undefined') {
         return Promise.resolve()
             .then(() => {
@@ -291,3 +451,64 @@ export function setData(callback, options) {
             .catch((err) => console.error(err));
     }
 }
+
+const version = '4.5.0';
+const state = {
+    _el: null,
+    _template: null,
+    oldTree: null,
+    isMounted: false,
+    observer: null,
+};
+function normalizeContainer(container) {
+    if (typeof container === 'string') {
+        const res = document.querySelector(container);
+        if (!res) {
+            let elem = null;
+            if (container.startsWith('#')) {
+                elem = document.createElement('div');
+                elem.setAttribute('id', container.substring(1, container.length));
+            }
+            else if (container.startsWith('.')) {
+                elem = document.createElement('div');
+                elem.setAttribute('class', container.substring(1, container.length));
+            }
+            else {
+                console.warn(`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`);
+            }
+            document.body.insertAdjacentElement('afterbegin', elem);
+            return elem;
+        }
+        return res;
+    }
+    else if (container instanceof HTMLElement) {
+        return container;
+    }
+    else if (window.ShadowRoot &&
+        container instanceof window.ShadowRoot &&
+        container.mode === 'closed') {
+        console.warn(`[Strve warn]: mounting on a ShadowRoot with \`{mode: "closed"}\` may lead to unpredictable bugs.`);
+        return null;
+    }
+    else {
+        return null;
+    }
+}
+function createApp(template) {
+    const app = {
+        mount(el) {
+            if (normalizeContainer(el)) {
+                const tem = template();
+                state._template = template;
+                state._el = normalizeContainer(el);
+                state._el && mountNode(tem, state._el);
+            }
+            else {
+                console.warn('[Strve warn]: There must be a mount element node.');
+            }
+        },
+    };
+    return app;
+}
+
+export { createApp, domInfo, nextTick, onMounted, onUnmounted, propsData, setData, version };

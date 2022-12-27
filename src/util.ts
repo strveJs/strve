@@ -1,7 +1,5 @@
-// Version:4.3.0
-
-import { state } from './init.js';
-import { vnodeType } from './diff.js';
+import { state } from './init';
+import { vnodeType } from './diff';
 
 interface namespaceMapType {
 	[key: string]: string;
@@ -17,29 +15,30 @@ interface fragmentType {
 	children: any;
 }
 
-const isHTMLTag: (val: string) => boolean = makeMap(
-	'html,body,base,head,link,meta,style,title,' +
-		'address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,' +
-		'div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,' +
-		'a,b,abbr,bdi,bdo,br,cite,code,data,dfn,em,i,kbd,mark,q,rp,rt,rtc,ruby,' +
-		's,samp,small,span,strong,sub,sup,time,u,var,wbr,area,audio,map,track,video,' +
-		'embed,object,param,source,canvas,script,noscript,del,ins,' +
-		'caption,col,colgroup,table,thead,tbody,td,th,tr,' +
-		'button,datalist,fieldset,form,input,label,legend,meter,optgroup,option,' +
-		'output,progress,select,textarea,' +
-		'details,dialog,menu,menuitem,summary,' +
-		'content,element,shadow,template,blockquote,iframe,tfoot'
-);
-
-const isSVG: (val: string) => boolean = makeMap(
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+const HTML_TAGS =
+	'html,body,base,head,link,meta,style,title,address,article,aside,footer,' +
+	'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
+	'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
+	'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
+	'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
+	'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
+	'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
+	'option,output,progress,select,textarea,details,dialog,menu,' +
+	'summary,template,blockquote,iframe,tfoot';
+// https://developer.mozilla.org/en-US/docs/Web/SVG/Element
+const SVG_TAGS =
 	'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
-		'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
-		'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
-		'feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur,' +
-		'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
-		'linearGradient,stop,radialGradient,' +
-		'animateTransform,animateMotion'
-);
+	'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
+	'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
+	'feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur,' +
+	'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
+	'linearGradient,stop,radialGradient,' +
+	'animateTransform,animateMotion';
+
+const isHTMLTag: (val: string) => boolean = /*#__PURE__*/ makeMap(HTML_TAGS);
+
+const isSVG: (val: string) => boolean = /*#__PURE__*/ makeMap(SVG_TAGS);
 
 export function isXlink(name: string): boolean {
 	return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
@@ -94,6 +93,8 @@ export function checkVnode(vnodes: any): boolean {
 		return isVnode(vnodes);
 	}
 }
+const isComplexDataType: (obj: any) => boolean = (obj: any) =>
+	(typeof obj === 'object' || typeof obj === 'function') && obj !== null;
 
 export function isSameObject(obj1: any, obj2: any): boolean {
 	if (!isComplexDataType(obj1) || !isComplexDataType(obj2)) {
@@ -187,8 +188,6 @@ export function createNode(tag: string): Element | DocumentFragment | Comment {
 		return document.createDocumentFragment();
 	} else if (tag === 'comment' || tag === 'null') {
 		return document.createComment(tag);
-	} else if (tag === 'textnode') {
-		return document.createTextNode('');
 	}
 }
 
@@ -204,6 +203,3 @@ function setFragmentNode(dom: any): vnodeType {
 export function useFragmentNode(dom: vnodeType): vnodeType {
 	return !dom.tag ? setFragmentNode(dom) : dom;
 }
-
-const isComplexDataType: (obj: any) => boolean = (obj: any) =>
-	(typeof obj === 'object' || typeof obj === 'function') && obj !== null;
