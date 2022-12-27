@@ -53,7 +53,7 @@ const builds = {
 		plugins: [terser()],
 	},
 	'full-dev': {
-		input: resolve('build/input-full.js'),
+		input: resolve('build/input-full-esm.js'),
 		output: {
 			file: resolve('dist/strve.full.js'),
 			format: 'umd',
@@ -63,7 +63,7 @@ const builds = {
 		},
 	},
 	'full-prod': {
-		input: resolve('build/input-full.js'),
+		input: resolve('build/input-full-esm.js'),
 		output: {
 			file: resolve('dist/strve.full.prod.js'),
 			format: 'umd',
