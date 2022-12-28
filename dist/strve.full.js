@@ -181,18 +181,18 @@
         class customElement extends HTMLElement {
             constructor() {
                 super();
-                if (options.template && options.id) {
+                if (options.template) {
                     const t = document.createElement('template');
-                    t.setAttribute('id', options.id);
                     const content = t.content.cloneNode(true);
                     if (options.styles && Array.isArray(options.styles)) {
                         const s = document.createElement('style');
                         s.textContent = options.styles.join('');
                         content.appendChild(s);
                     }
-                    mountNode(options.template, content);
                     const shadow = this.attachShadow({ mode: 'open' });
                     shadow.appendChild(content);
+                    const tem = useFragmentNode(options.template);
+                    mount(tem, shadow);
                 }
             }
             // Called when the custom element is first connected to the document DOM.

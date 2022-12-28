@@ -9,7 +9,6 @@ interface lifetimesType {
     attributeChangedCallback: Function;
 }
 interface customElementType {
-    id: string;
     template: vnodeType;
     styles: Array<string>;
     lifetimes: lifetimesType;

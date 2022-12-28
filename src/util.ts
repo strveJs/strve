@@ -1,5 +1,5 @@
 import { state } from './init';
-import { vnodeType, mountNode } from './diff';
+import { vnodeType, mount } from './diff';
 interface namespaceMapType {
 	[key: string]: string;
 }
@@ -22,7 +22,6 @@ interface lifetimesType {
 }
 
 interface customElementType {
-	id: string;
 	template: vnodeType;
 	styles: Array<string>;
 	lifetimes: lifetimesType;
@@ -236,9 +235,8 @@ export function defineCustomElement(options: customElementType) {
 	class customElement extends HTMLElement {
 		constructor() {
 			super();
-			if (options.template && options.id) {
+			if (options.template) {
 				const t = document.createElement('template');
-				t.setAttribute('id', options.id);
 				const content = t.content.cloneNode(true);
 
 				if (options.styles && Array.isArray(options.styles)) {
@@ -247,9 +245,11 @@ export function defineCustomElement(options: customElementType) {
 					content.appendChild(s);
 				}
 
-				mountNode(options.template, content);
 				const shadow = this.attachShadow({ mode: 'open' });
 				shadow.appendChild(content);
+
+				const tem = useFragmentNode(options.template);
+				mount(tem, shadow);
 			}
 		}
 

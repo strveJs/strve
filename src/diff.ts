@@ -70,7 +70,7 @@ function reactive<T extends proxyConfType>(target: object = {}): any {
 	return observed;
 }
 
-function mount(
+export function mount(
 	vnode: vnodeType,
 	container: HTMLElement | Node,
 	anchor?: Node

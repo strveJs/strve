@@ -10,6 +10,7 @@ export interface vnodeType {
 }
 export declare const domInfo: any;
 export declare let propsData: any;
+export declare function mount(vnode: vnodeType, container: HTMLElement | Node, anchor?: Node): void;
 export declare function onMounted(fn: Function): void;
 export declare function onUnmounted(fn: Function): void;
 export declare function nextTick(fn: Function): void;
