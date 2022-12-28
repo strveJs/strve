@@ -15,10 +15,18 @@ interface fragmentType {
 	children: any;
 }
 
+interface lifetimesType {
+	connectedCallback: Function;
+	disconnectedCallback: Function;
+	adoptedCallback: Function;
+	attributeChangedCallback: Function;
+}
+
 interface customElementType {
 	id: string;
 	template: string;
 	styles: Array<string>;
+	lifetimes: lifetimesType;
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
@@ -243,24 +251,28 @@ export function defineCustomElement(options: customElementType) {
 			}
 		}
 
-		// 当自定义元素第一次被连接到文档 DOM 时被调用。
+		// Called when the custom element is first connected to the document DOM.
 		connectedCallback() {
-			console.log('被挂载到页面');
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.connectedCallback(arg);
 		}
 
-		// 当自定义元素与文档 DOM 断开连接时被调用。
+		// Called when a custom element is disconnected from the document DOM.
 		disconnectedCallback() {
-			console.log('从页面被移除');
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.disconnectedCallback(arg);
 		}
 
-		// 当自定义元素被移动到新文档时被调用。
+		// Called when a custom element is moved to a new document.
 		adoptedCallback() {
-			console.log('被移动到新页面');
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.adoptedCallback(arg);
 		}
 
-		// 当自定义元素的一个属性被增加、移除或更改时被调用。
+		// Called when an attribute of a custom element is added, removed, or changed.
 		attributeChangedCallback() {
-			console.log('属性值被改变');
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.attributeChangedCallback(arg);
 		}
 	}
 

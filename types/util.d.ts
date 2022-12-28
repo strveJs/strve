@@ -2,10 +2,17 @@ import { vnodeType } from './diff';
 interface HTMLElementElType {
     [style: string]: any;
 }
+interface lifetimesType {
+    connectedCallback: Function;
+    disconnectedCallback: Function;
+    adoptedCallback: Function;
+    attributeChangedCallback: Function;
+}
 interface customElementType {
     id: string;
     template: string;
     styles: Array<string>;
+    lifetimes: lifetimesType;
 }
 export declare function isXlink(name: string): boolean;
 export declare function isComplexType(v: any): boolean;
