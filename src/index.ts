@@ -10,3 +10,5 @@ export {
 	domInfo,
 	propsData,
 } from './diff';
+
+export { defineCustomElement } from './util';

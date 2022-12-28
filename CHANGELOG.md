@@ -1,3 +1,3 @@
-## v4.5.0 (Beta)
+## v4.7.0 (Beta)
 
 To be released.

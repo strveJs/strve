@@ -1,5 +1,5 @@
 /*!
- * Strve.js v4.5.0
+ * Strve.js v4.7.0
  * (c) 2021-2022 maomincoding
  * Released under the MIT License.
  */
@@ -135,17 +135,25 @@ function removeEvent(el, key, oldProps) {
     }
 }
 function createNode(tag) {
+    // Html
     if (isHTMLTag(tag)) {
         return document.createElement(tag);
     }
+    // Svg
     else if (isSVG(tag)) {
         return createElementNS(getTagNamespace(tag), tag);
     }
+    // Fragment
     else if (tag === 'fragment' || tag === 'component') {
         return document.createDocumentFragment();
     }
+    // Comment
     else if (tag === 'comment' || tag === 'null') {
         return document.createComment(tag);
+    }
+    // Web-components
+    else if (tag.indexOf('-') !== -1) {
+        return document.createElement(tag);
     }
 }
 function setFragmentNode(dom) {
@@ -158,6 +166,43 @@ function setFragmentNode(dom) {
 }
 function useFragmentNode(dom) {
     return !dom.tag ? setFragmentNode(dom) : dom;
+}
+function defineCustomElement(options) {
+    class customElement extends HTMLElement {
+        constructor() {
+            super();
+            if (options.template && options.id) {
+                const t = document.createElement('template');
+                t.setAttribute('id', options.id);
+                t.innerHTML = options.template;
+                const shadow = this.attachShadow({ mode: 'open' });
+                const content = t.content.cloneNode(true);
+                if (options.styles && Array.isArray(options.styles)) {
+                    const s = document.createElement('style');
+                    s.textContent = options.styles.join('');
+                    content.appendChild(s);
+                }
+                shadow.appendChild(content);
+            }
+        }
+        // 当自定义元素第一次被连接到文档 DOM 时被调用。
+        connectedCallback() {
+            console.log('被挂载到页面');
+        }
+        // 当自定义元素与文档 DOM 断开连接时被调用。
+        disconnectedCallback() {
+            console.log('从页面被移除');
+        }
+        // 当自定义元素被移动到新文档时被调用。
+        adoptedCallback() {
+            console.log('被移动到新页面');
+        }
+        // 当自定义元素的一个属性被增加、移除或更改时被调用。
+        attributeChangedCallback() {
+            console.log('属性值被改变');
+        }
+    }
+    return customElement;
 }
 
 const _com_ = Object.create(null);
@@ -452,7 +497,7 @@ function setData(callback, options) {
     }
 }
 
-const version = '4.5.0';
+const version = '4.7.0';
 const state = {
     _el: null,
     _template: null,
@@ -705,4 +750,4 @@ const vnode = function (tag, props, ...children) {
 };
 const h = regular.bind(vnode);
 
-export { createApp, domInfo, h, nextTick, onMounted, onUnmounted, propsData, setData, version };
+export { createApp, defineCustomElement, domInfo, h, nextTick, onMounted, onUnmounted, propsData, setData, version };

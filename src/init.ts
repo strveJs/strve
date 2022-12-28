@@ -9,7 +9,7 @@ interface StateType {
 	observer: MutationObserver | null;
 }
 
-export const version: string = '4.5.0';
+export const version: string = '__VERSION__';
 
 export const state: StateType = {
 	_el: null,

@@ -15,6 +15,12 @@ interface fragmentType {
 	children: any;
 }
 
+interface customElementType {
+	id: string;
+	template: string;
+	styles: Array<string>;
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
 const HTML_TAGS =
 	'html,body,base,head,link,meta,style,title,address,article,aside,footer,' +
@@ -180,14 +186,25 @@ export function removeEvent(el: HTMLElement, key: string, oldProps: any): void {
 }
 
 export function createNode(tag: string): Element | DocumentFragment | Comment {
+	// Html
 	if (isHTMLTag(tag)) {
 		return document.createElement(tag);
-	} else if (isSVG(tag)) {
+	}
+	// Svg
+	else if (isSVG(tag)) {
 		return createElementNS(getTagNamespace(tag), tag);
-	} else if (tag === 'fragment' || tag === 'component') {
+	}
+	// Fragment
+	else if (tag === 'fragment' || tag === 'component') {
 		return document.createDocumentFragment();
-	} else if (tag === 'comment' || tag === 'null') {
+	}
+	// Comment
+	else if (tag === 'comment' || tag === 'null') {
 		return document.createComment(tag);
+	}
+	// Web-components
+	else if (tag.indexOf('-') !== -1) {
+		return document.createElement(tag);
 	}
 }
 
@@ -202,4 +219,50 @@ function setFragmentNode(dom: any): vnodeType {
 
 export function useFragmentNode(dom: vnodeType): vnodeType {
 	return !dom.tag ? setFragmentNode(dom) : dom;
+}
+
+export function defineCustomElement(options: customElementType) {
+	class customElement extends HTMLElement {
+		constructor() {
+			super();
+			if (options.template && options.id) {
+				const t = document.createElement('template');
+				t.setAttribute('id', options.id);
+				t.innerHTML = options.template;
+
+				const shadow = this.attachShadow({ mode: 'open' });
+				const content = t.content.cloneNode(true);
+
+				if (options.styles && Array.isArray(options.styles)) {
+					const s = document.createElement('style');
+					s.textContent = options.styles.join('');
+					content.appendChild(s);
+				}
+
+				shadow.appendChild(content);
+			}
+		}
+
+		// 当自定义元素第一次被连接到文档 DOM 时被调用。
+		connectedCallback() {
+			console.log('被挂载到页面');
+		}
+
+		// 当自定义元素与文档 DOM 断开连接时被调用。
+		disconnectedCallback() {
+			console.log('从页面被移除');
+		}
+
+		// 当自定义元素被移动到新文档时被调用。
+		adoptedCallback() {
+			console.log('被移动到新页面');
+		}
+
+		// 当自定义元素的一个属性被增加、移除或更改时被调用。
+		attributeChangedCallback() {
+			console.log('属性值被改变');
+		}
+	}
+
+	return customElement;
 }
