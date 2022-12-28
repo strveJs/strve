@@ -1,5 +1,5 @@
 import { state } from './init';
-import { vnodeType, mount } from './diff';
+import { vnodeType } from './diff';
 interface namespaceMapType {
 	[key: string]: string;
 }
@@ -12,19 +12,6 @@ interface fragmentType {
 	tag: string;
 	props: null;
 	children: any;
-}
-
-interface lifetimesType {
-	connectedCallback: Function;
-	disconnectedCallback: Function;
-	adoptedCallback: Function;
-	attributeChangedCallback: Function;
-}
-
-interface customElementType {
-	template: vnodeType;
-	styles: Array<string>;
-	lifetimes: lifetimesType;
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
@@ -229,54 +216,4 @@ function setFragmentNode(dom: any): vnodeType {
 
 export function useFragmentNode(dom: vnodeType): vnodeType {
 	return !dom.tag ? setFragmentNode(dom) : dom;
-}
-
-export function defineCustomElement(options: customElementType) {
-	class customElement extends HTMLElement {
-		constructor() {
-			super();
-			if (options.template) {
-				const t = document.createElement('template');
-				const content = t.content.cloneNode(true);
-
-				if (options.styles && Array.isArray(options.styles)) {
-					const s = document.createElement('style');
-					s.textContent = options.styles.join('');
-					content.appendChild(s);
-				}
-
-				const shadow = this.attachShadow({ mode: 'open' });
-				shadow.appendChild(content);
-
-				const tem = useFragmentNode(options.template);
-				mount(tem, shadow);
-			}
-		}
-
-		// Called when the custom element is first connected to the document DOM.
-		connectedCallback() {
-			const arg = arguments;
-			options.lifetimes && options.lifetimes.connectedCallback(arg);
-		}
-
-		// Called when a custom element is disconnected from the document DOM.
-		disconnectedCallback() {
-			const arg = arguments;
-			options.lifetimes && options.lifetimes.disconnectedCallback(arg);
-		}
-
-		// Called when a custom element is moved to a new document.
-		adoptedCallback() {
-			const arg = arguments;
-			options.lifetimes && options.lifetimes.adoptedCallback(arg);
-		}
-
-		// Called when an attribute of a custom element is added, removed, or changed.
-		attributeChangedCallback() {
-			const arg = arguments;
-			options.lifetimes && options.lifetimes.attributeChangedCallback(arg);
-		}
-	}
-
-	return customElement;
 }

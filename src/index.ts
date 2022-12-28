@@ -9,6 +9,5 @@ export {
 	nextTick,
 	domInfo,
 	propsData,
+	defineCustomElement,
 } from './diff';
-
-export { defineCustomElement } from './util';

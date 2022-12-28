@@ -171,47 +171,6 @@ function setFragmentNode(dom) {
 function useFragmentNode(dom) {
     return !dom.tag ? setFragmentNode(dom) : dom;
 }
-function defineCustomElement(options) {
-    class customElement extends HTMLElement {
-        constructor() {
-            super();
-            if (options.template) {
-                const t = document.createElement('template');
-                const content = t.content.cloneNode(true);
-                if (options.styles && Array.isArray(options.styles)) {
-                    const s = document.createElement('style');
-                    s.textContent = options.styles.join('');
-                    content.appendChild(s);
-                }
-                const shadow = this.attachShadow({ mode: 'open' });
-                shadow.appendChild(content);
-                const tem = useFragmentNode(options.template);
-                mount(tem, shadow);
-            }
-        }
-        // Called when the custom element is first connected to the document DOM.
-        connectedCallback() {
-            const arg = arguments;
-            options.lifetimes && options.lifetimes.connectedCallback(arg);
-        }
-        // Called when a custom element is disconnected from the document DOM.
-        disconnectedCallback() {
-            const arg = arguments;
-            options.lifetimes && options.lifetimes.disconnectedCallback(arg);
-        }
-        // Called when a custom element is moved to a new document.
-        adoptedCallback() {
-            const arg = arguments;
-            options.lifetimes && options.lifetimes.adoptedCallback(arg);
-        }
-        // Called when an attribute of a custom element is added, removed, or changed.
-        attributeChangedCallback() {
-            const arg = arguments;
-            options.lifetimes && options.lifetimes.attributeChangedCallback(arg);
-        }
-    }
-    return customElement;
-}
 
 const _com_ = Object.create(null);
 const _components = new WeakMap();
@@ -486,6 +445,10 @@ function setData(callback, options) {
                 mount((state.oldTree = state._template()), state._el);
                 mountHook && mountHook();
             }
+            else if (options && options.name === 'useCustomElement') {
+                state.oldTree = _components.get(_com_[options.customElement.id]);
+                mountNode(options.customElement.template(), null, options.status);
+            }
             else if (options && typeof options.name === 'function') {
                 const name = options.name.name;
                 const _component = options.name();
@@ -493,16 +456,60 @@ function setData(callback, options) {
                     componentName = name;
                     state.oldTree = useFragmentNode(_components.get(_com_[name]));
                 }
-                mountNode(_component, state._el, options.status, name);
+                mountNode(_component, null, options.status, name);
             }
             else {
                 const status = options && options.status ? options.status : null;
-                mountNode(state._template(), state._el, status);
+                mountNode(state._template(), null, status);
             }
             nextTickHook && nextTickHook();
         })
             .catch((err) => console.error(err));
     }
+}
+function defineCustomElement(options) {
+    class customElement extends HTMLElement {
+        constructor() {
+            super();
+            if (options.template && options.id) {
+                const t = document.createElement('template');
+                t.setAttribute('id', options.id);
+                const content = t.content.cloneNode(true);
+                if (options.styles && Array.isArray(options.styles)) {
+                    const s = document.createElement('style');
+                    s.textContent = options.styles.join('');
+                    content.appendChild(s);
+                }
+                const shadow = this.attachShadow({ mode: 'open' });
+                shadow.appendChild(content);
+                const tem = useFragmentNode(options.template());
+                mount(tem, shadow);
+                _com_[options.id] = Object.create(null);
+                _components.set(_com_[options.id], tem);
+            }
+        }
+        // Called when the custom element is first connected to the document DOM.
+        connectedCallback() {
+            const arg = arguments;
+            options.lifetimes && options.lifetimes.connectedCallback(arg);
+        }
+        // Called when a custom element is disconnected from the document DOM.
+        disconnectedCallback() {
+            const arg = arguments;
+            options.lifetimes && options.lifetimes.disconnectedCallback(arg);
+        }
+        // Called when a custom element is moved to a new document.
+        adoptedCallback() {
+            const arg = arguments;
+            options.lifetimes && options.lifetimes.adoptedCallback(arg);
+        }
+        // Called when an attribute of a custom element is added, removed, or changed.
+        attributeChangedCallback() {
+            const arg = arguments;
+            options.lifetimes && options.lifetimes.attributeChangedCallback(arg);
+        }
+    }
+    return customElement;
 }
 
 const version = '4.7.0';

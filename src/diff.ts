@@ -13,16 +13,32 @@ import {
 	createNode,
 	useFragmentNode,
 } from './util';
-interface setDataOptionsType {
-	status: string;
-	name: Function;
-}
 
 export interface vnodeType {
 	tag: string;
 	props: any;
 	children: any[];
 	el?: HTMLElement;
+}
+
+interface lifetimesType {
+	connectedCallback: Function;
+	disconnectedCallback: Function;
+	adoptedCallback: Function;
+	attributeChangedCallback: Function;
+}
+
+interface customElementType {
+	id: string;
+	template: Function;
+	styles: Array<string>;
+	lifetimes: lifetimesType;
+}
+
+interface setDataOptionsType {
+	status: string;
+	name: Function | string;
+	customElement: customElementType;
 }
 
 const _com_: any = Object.create(null);
@@ -298,7 +314,7 @@ export function nextTick(fn: Function): void {
 
 export function mountNode(
 	dom: vnodeType,
-	selector: Node,
+	selector?: Node,
 	status?: string,
 	name?: string
 ): void {
@@ -335,6 +351,9 @@ export function setData(
 					unMountedHook = null;
 					mount((state.oldTree = state._template()), state._el);
 					mountHook && mountHook();
+				} else if (options && options.name === 'useCustomElement') {
+					state.oldTree = _components.get(_com_[options.customElement.id]);
+					mountNode(options.customElement.template(), null, options.status);
 				} else if (options && typeof options.name === 'function') {
 					const name: string = options.name.name;
 					const _component: vnodeType = options.name();
@@ -344,14 +363,68 @@ export function setData(
 						state.oldTree = useFragmentNode(_components.get(_com_[name]));
 					}
 
-					mountNode(_component, state._el, options.status, name);
+					mountNode(_component, null, options.status, name);
 				} else {
 					const status: string | null =
 						options && options.status ? options.status : null;
-					mountNode(state._template(), state._el, status);
+					mountNode(state._template(), null, status);
 				}
 				nextTickHook && nextTickHook();
 			})
 			.catch((err) => console.error(err));
 	}
+}
+
+export function defineCustomElement(options: customElementType) {
+	class customElement extends HTMLElement {
+		constructor() {
+			super();
+			if (options.template && options.id) {
+				const t = document.createElement('template');
+				t.setAttribute('id', options.id);
+				const content = t.content.cloneNode(true);
+
+				if (options.styles && Array.isArray(options.styles)) {
+					const s = document.createElement('style');
+					s.textContent = options.styles.join('');
+					content.appendChild(s);
+				}
+
+				const shadow = this.attachShadow({ mode: 'open' });
+				shadow.appendChild(content);
+
+				const tem = useFragmentNode(options.template());
+				mount(tem, shadow);
+
+				_com_[options.id] = Object.create(null);
+				_components.set(_com_[options.id], tem);
+			}
+		}
+
+		// Called when the custom element is first connected to the document DOM.
+		connectedCallback() {
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.connectedCallback(arg);
+		}
+
+		// Called when a custom element is disconnected from the document DOM.
+		disconnectedCallback() {
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.disconnectedCallback(arg);
+		}
+
+		// Called when a custom element is moved to a new document.
+		adoptedCallback() {
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.adoptedCallback(arg);
+		}
+
+		// Called when an attribute of a custom element is added, removed, or changed.
+		attributeChangedCallback() {
+			const arg = arguments;
+			options.lifetimes && options.lifetimes.attributeChangedCallback(arg);
+		}
+	}
+
+	return customElement;
 }

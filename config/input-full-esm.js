@@ -7,5 +7,5 @@ export {
 	nextTick,
 	domInfo,
 	propsData,
+	defineCustomElement,
 } from '../lib/diff.js';
-export { defineCustomElement } from '../lib/util.js';
