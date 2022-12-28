@@ -155,6 +155,10 @@ function createNode(tag) {
     else if (tag.indexOf('-') !== -1) {
         return document.createElement(tag);
     }
+    // Default
+    else {
+        return document.createElement(tag);
+    }
 }
 function setFragmentNode(dom) {
     const fragment = {
@@ -174,14 +178,14 @@ function defineCustomElement(options) {
             if (options.template && options.id) {
                 const t = document.createElement('template');
                 t.setAttribute('id', options.id);
-                t.innerHTML = options.template;
-                const shadow = this.attachShadow({ mode: 'open' });
                 const content = t.content.cloneNode(true);
                 if (options.styles && Array.isArray(options.styles)) {
                     const s = document.createElement('style');
                     s.textContent = options.styles.join('');
                     content.appendChild(s);
                 }
+                mountNode(options.template, content);
+                const shadow = this.attachShadow({ mode: 'open' });
                 shadow.appendChild(content);
             }
         }

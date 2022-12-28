@@ -1,6 +1,5 @@
 import { state } from './init';
-import { vnodeType } from './diff';
-
+import { vnodeType, mountNode } from './diff';
 interface namespaceMapType {
 	[key: string]: string;
 }
@@ -24,7 +23,7 @@ interface lifetimesType {
 
 interface customElementType {
 	id: string;
-	template: string;
+	template: vnodeType;
 	styles: Array<string>;
 	lifetimes: lifetimesType;
 }
@@ -214,6 +213,10 @@ export function createNode(tag: string): Element | DocumentFragment | Comment {
 	else if (tag.indexOf('-') !== -1) {
 		return document.createElement(tag);
 	}
+	// Default
+	else {
+		return document.createElement(tag);
+	}
 }
 
 function setFragmentNode(dom: any): vnodeType {
@@ -236,9 +239,6 @@ export function defineCustomElement(options: customElementType) {
 			if (options.template && options.id) {
 				const t = document.createElement('template');
 				t.setAttribute('id', options.id);
-				t.innerHTML = options.template;
-
-				const shadow = this.attachShadow({ mode: 'open' });
 				const content = t.content.cloneNode(true);
 
 				if (options.styles && Array.isArray(options.styles)) {
@@ -247,6 +247,8 @@ export function defineCustomElement(options: customElementType) {
 					content.appendChild(s);
 				}
 
+				mountNode(options.template, content);
+				const shadow = this.attachShadow({ mode: 'open' });
 				shadow.appendChild(content);
 			}
 		}

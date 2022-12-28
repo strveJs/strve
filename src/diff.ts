@@ -298,7 +298,7 @@ export function nextTick(fn: Function): void {
 
 export function mountNode(
 	dom: vnodeType,
-	selector: HTMLElement,
+	selector: Node,
 	status?: string,
 	name?: string
 ): void {

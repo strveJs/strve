@@ -10,7 +10,7 @@ interface lifetimesType {
 }
 interface customElementType {
     id: string;
-    template: string;
+    template: vnodeType;
     styles: Array<string>;
     lifetimes: lifetimesType;
 }
