@@ -14,6 +14,7 @@ interface customElementType {
     id: string;
     template: Function;
     styles: Array<string>;
+    attributeChanged: Array<string>;
     lifetimes: lifetimesType;
 }
 interface setDataOptionsType {
@@ -344,5 +345,6 @@ export declare function defineCustomElement(options: customElementType): {
         blur(): void;
         focus(options?: FocusOptions): void;
     };
+    readonly observedAttributes: string[];
 };
 export {};

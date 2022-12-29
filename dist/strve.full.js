@@ -475,6 +475,11 @@
     }
     function defineCustomElement(options) {
         class customElement extends HTMLElement {
+            static get observedAttributes() {
+                if (options.attributeChanged && options.attributeChanged.length > 0) {
+                    return options.attributeChanged;
+                }
+            }
             constructor() {
                 super();
                 if (options.template && options.id) {
@@ -497,22 +502,30 @@
             // Called when the custom element is first connected to the document DOM.
             connectedCallback() {
                 const arg = arguments;
-                options.lifetimes && options.lifetimes.connectedCallback(arg);
+                options.lifetimes &&
+                    typeof options.lifetimes.connectedCallback === 'function' &&
+                    options.lifetimes.connectedCallback(arg);
             }
             // Called when a custom element is disconnected from the document DOM.
             disconnectedCallback() {
                 const arg = arguments;
-                options.lifetimes && options.lifetimes.disconnectedCallback(arg);
+                options.lifetimes &&
+                    typeof options.lifetimes.disconnectedCallback === 'function' &&
+                    options.lifetimes.disconnectedCallback(arg);
             }
             // Called when a custom element is moved to a new document.
             adoptedCallback() {
                 const arg = arguments;
-                options.lifetimes && options.lifetimes.adoptedCallback(arg);
+                options.lifetimes &&
+                    typeof options.lifetimes.adoptedCallback === 'function' &&
+                    options.lifetimes.adoptedCallback(arg);
             }
             // Called when an attribute of a custom element is added, removed, or changed.
             attributeChangedCallback() {
                 const arg = arguments;
-                options.lifetimes && options.lifetimes.attributeChangedCallback(arg);
+                options.lifetimes &&
+                    typeof options.lifetimes.attributeChangedCallback === 'function' &&
+                    options.lifetimes.attributeChangedCallback(arg);
             }
         }
         return customElement;
