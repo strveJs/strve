@@ -120,6 +120,10 @@ function addEvent(el, props) {
                 element.split('on')[1].substring(1);
             el.addEventListener(name, props[element]);
         }
+        else if (element.startsWith('@')) {
+            const name = element.split('@')[1];
+            el.addEventListener(name, props[element]);
+        }
     }
 }
 function removeEvent(el, key, oldProps) {
@@ -131,6 +135,10 @@ function removeEvent(el, key, oldProps) {
     }
     if (key.startsWith('on')) {
         const name = key.split('on')[1][0].toLowerCase() + key.split('on')[1].substring(1);
+        el.removeEventListener(name, oldProps[key]);
+    }
+    else if (key.startsWith('@')) {
+        const name = key.split('@')[1];
         el.removeEventListener(name, oldProps[key]);
     }
 }

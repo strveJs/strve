@@ -160,6 +160,9 @@ export function addEvent(el: HTMLElement, props: any): void {
 				element.split('on')[1][0].toLowerCase() +
 				element.split('on')[1].substring(1);
 			el.addEventListener(name, props[element]);
+		} else if (element.startsWith('@')) {
+			const name = element.split('@')[1];
+			el.addEventListener(name, props[element]);
 		}
 	}
 }
@@ -174,6 +177,9 @@ export function removeEvent(el: HTMLElement, key: string, oldProps: any): void {
 	if (key.startsWith('on')) {
 		const name =
 			key.split('on')[1][0].toLowerCase() + key.split('on')[1].substring(1);
+		el.removeEventListener(name, oldProps[key]);
+	} else if (key.startsWith('@')) {
+		const name = key.split('@')[1];
 		el.removeEventListener(name, oldProps[key]);
 	}
 }
