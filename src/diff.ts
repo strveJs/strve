@@ -354,8 +354,15 @@ export function setData(
 					mount((state.oldTree = state._template()), state._el);
 					mountHook && mountHook();
 				} else if (options && options.name === 'useCustomElement') {
-					state.oldTree = _components.get(_com_[options.customElement.id]);
-					mountNode(options.customElement.template(), null, options.status);
+					const oldTree = _components.get(
+						_com_[options.customElement.id]
+					).template;
+					const props = _components.get(_com_[options.customElement.id]).props;
+
+					const newTree = useFragmentNode(
+						options.customElement.template(props)
+					);
+					patch(oldTree, newTree, options.status);
 				} else if (options && typeof options.name === 'function') {
 					const name: string = options.name.name;
 					const _component: vnodeType = options.name();
@@ -413,7 +420,10 @@ export function defineCustomElement(options: customElementType, tag: string) {
 					const tem = useFragmentNode(options.template());
 					mount(tem, this.shadow);
 					_com_[options.id] = Object.create(null);
-					_components.set(_com_[options.id], tem);
+					_components.set(_com_[options.id], {
+						template: tem,
+						props: null,
+					});
 				}
 			}
 		}
@@ -451,10 +461,19 @@ export function defineCustomElement(options: customElementType, tag: string) {
 				const tem = useFragmentNode(options.template(this.props));
 				if (!this.isComMounted) {
 					mount(tem, this.shadow);
+					_com_[options.id] = Object.create(null);
+					_components.set(_com_[options.id], {
+						template: tem,
+						props: this.props,
+					});
 					this.comOldTree = tem;
 					this.isComMounted = true;
 				} else {
 					patch(this.comOldTree, tem);
+					_components.set(_com_[options.id], {
+						template: tem,
+						props: this.props,
+					});
 					this.comOldTree = tem;
 				}
 			}
