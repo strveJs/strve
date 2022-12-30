@@ -1,5 +1,5 @@
 {
-	"name": "strvejs",
+	"name": "strve",
 	"version": "4.7.0",
 	"description": "A JS library that can convert strings into view",
 	"main": "dist/strve.full.js",
