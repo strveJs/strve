@@ -32,6 +32,7 @@ interface customElementType {
 	id: string;
 	template: Function;
 	styles: Array<string>;
+	immediateProps: Boolean;
 	attributeChanged: Array<string>;
 	lifetimes: lifetimesType;
 }
@@ -164,7 +165,7 @@ export function mount(
 	}
 }
 
-function patch(n1: vnodeType, n2: vnodeType, status: string): void {
+function patch(n1: vnodeType, n2: vnodeType, status?: string): void {
 	const oldProps: any = n1.props || {};
 
 	if (oldProps.hasOwnProperty(flag[0]) && n1.tag !== n2.tag) {
@@ -376,8 +377,12 @@ export function setData(
 	}
 }
 
-export function defineCustomElement(options: customElementType) {
+export function defineCustomElement(options: customElementType, tag: string) {
 	class customElement extends HTMLElement {
+		shadow: ShadowRoot;
+		props: any | null;
+		isComMounted: Boolean;
+		comOldTree: vnodeType;
 		static get observedAttributes() {
 			if (options.attributeChanged && options.attributeChanged.length > 0) {
 				return options.attributeChanged;
@@ -385,6 +390,11 @@ export function defineCustomElement(options: customElementType) {
 		}
 		constructor() {
 			super();
+			this.shadow = null;
+			this.props = Object.create(null);
+			this.isComMounted = false;
+			this.comOldTree = Object.create(null);
+
 			if (options.template && options.id) {
 				const t = document.createElement('template');
 				t.setAttribute('id', options.id);
@@ -396,14 +406,15 @@ export function defineCustomElement(options: customElementType) {
 					content.appendChild(s);
 				}
 
-				const shadow = this.attachShadow({ mode: 'open' });
-				shadow.appendChild(content);
+				this.shadow = this.attachShadow({ mode: 'open' });
+				this.shadow.appendChild(content);
 
-				const tem = useFragmentNode(options.template());
-				mount(tem, shadow);
-
-				_com_[options.id] = Object.create(null);
-				_components.set(_com_[options.id], tem);
+				if (!options.attributeChanged) {
+					const tem = useFragmentNode(options.template());
+					mount(tem, this.shadow);
+					_com_[options.id] = Object.create(null);
+					_components.set(_com_[options.id], tem);
+				}
 			}
 		}
 
@@ -434,11 +445,33 @@ export function defineCustomElement(options: customElementType) {
 		// Called when an attribute of a custom element is added, removed, or changed.
 		attributeChangedCallback() {
 			const arg = arguments;
-			options.lifetimes &&
-				typeof options.lifetimes.attributeChangedCallback === 'function' &&
-				options.lifetimes.attributeChangedCallback(arg);
+
+			if (options.attributeChanged && options.attributeChanged.length > 0) {
+				this.props[arg[0]] = arg[2];
+				const tem = useFragmentNode(options.template(this.props));
+				if (!this.isComMounted) {
+					mount(tem, this.shadow);
+					this.comOldTree = tem;
+					this.isComMounted = true;
+				} else {
+					patch(this.comOldTree, tem);
+					this.comOldTree = tem;
+				}
+			}
+
+			if (options.immediateProps) {
+				options.lifetimes &&
+					typeof options.lifetimes.attributeChangedCallback === 'function' &&
+					options.lifetimes.attributeChangedCallback(arg);
+			}
 		}
 	}
 
-	return customElement;
+	if (typeof tag === 'string' && tag.indexOf('-') !== -1) {
+		customElements.define(tag, customElement);
+	} else {
+		console.warn(
+			`[Strve warn]: [${tag}]>> please name the string with "-" as a custom element. `
+		);
+	}
 }

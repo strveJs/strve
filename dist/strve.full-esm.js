@@ -475,8 +475,12 @@ function setData(callback, options) {
             .catch((err) => console.error(err));
     }
 }
-function defineCustomElement(options) {
+function defineCustomElement(options, tag) {
     class customElement extends HTMLElement {
+        shadow;
+        props;
+        isComMounted;
+        comOldTree;
         static get observedAttributes() {
             if (options.attributeChanged && options.attributeChanged.length > 0) {
                 return options.attributeChanged;
@@ -484,6 +488,10 @@ function defineCustomElement(options) {
         }
         constructor() {
             super();
+            this.shadow = null;
+            this.props = Object.create(null);
+            this.isComMounted = false;
+            this.comOldTree = Object.create(null);
             if (options.template && options.id) {
                 const t = document.createElement('template');
                 t.setAttribute('id', options.id);
@@ -493,12 +501,14 @@ function defineCustomElement(options) {
                     s.textContent = options.styles.join('');
                     content.appendChild(s);
                 }
-                const shadow = this.attachShadow({ mode: 'open' });
-                shadow.appendChild(content);
-                const tem = useFragmentNode(options.template());
-                mount(tem, shadow);
-                _com_[options.id] = Object.create(null);
-                _components.set(_com_[options.id], tem);
+                this.shadow = this.attachShadow({ mode: 'open' });
+                this.shadow.appendChild(content);
+                if (!options.attributeChanged) {
+                    const tem = useFragmentNode(options.template());
+                    mount(tem, this.shadow);
+                    _com_[options.id] = Object.create(null);
+                    _components.set(_com_[options.id], tem);
+                }
             }
         }
         // Called when the custom element is first connected to the document DOM.
@@ -525,12 +535,32 @@ function defineCustomElement(options) {
         // Called when an attribute of a custom element is added, removed, or changed.
         attributeChangedCallback() {
             const arg = arguments;
-            options.lifetimes &&
-                typeof options.lifetimes.attributeChangedCallback === 'function' &&
-                options.lifetimes.attributeChangedCallback(arg);
+            if (options.attributeChanged && options.attributeChanged.length > 0) {
+                this.props[arg[0]] = arg[2];
+                const tem = useFragmentNode(options.template(this.props));
+                if (!this.isComMounted) {
+                    mount(tem, this.shadow);
+                    this.comOldTree = tem;
+                    this.isComMounted = true;
+                }
+                else {
+                    patch(this.comOldTree, tem);
+                    this.comOldTree = tem;
+                }
+            }
+            if (options.immediateProps) {
+                options.lifetimes &&
+                    typeof options.lifetimes.attributeChangedCallback === 'function' &&
+                    options.lifetimes.attributeChangedCallback(arg);
+            }
         }
     }
-    return customElement;
+    if (typeof tag === 'string' && tag.indexOf('-') !== -1) {
+        customElements.define(tag, customElement);
+    }
+    else {
+        console.warn(`[Strve warn]: [${tag}]>> please name the string with "-" as a custom element. `);
+    }
 }
 
 const version = '4.7.0';
