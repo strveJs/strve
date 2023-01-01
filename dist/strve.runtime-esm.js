@@ -1,6 +1,6 @@
 /*!
- * Strve.js v5.0.2
- * (c) 2021-2022 maomincoding
+ * Strve.js v5.0.3
+ * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
@@ -577,7 +577,7 @@ function defineCustomElement(options, tag) {
     }
 }
 
-const version = '5.0.2';
+const version = '5.0.3';
 const state = {
     _el: null,
     _template: null,
