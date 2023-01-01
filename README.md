@@ -3,12 +3,6 @@
     <img width="180" src="https://maomincoding.github.io/strve-doc/logo.png" alt="Strve logo">
   </a>
 </p>
-<br/>
-<p align="center">
-  <a href="https://npmjs.com/package/strve-js"><img src="https://badgen.net/npm/v/strve-js" alt="npm package"></a>
-  <a href="https://npmjs.com/package/strve-js"><img src="https://badgen.net/npm/license/strve-js" alt="npm package"></a>
-</p>
-<br/>
 
 # Strve.js
 

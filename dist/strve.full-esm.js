@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.0.3
+ * Strve.js v5.1.1
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -577,7 +577,7 @@ function defineCustomElement(options, tag) {
     }
 }
 
-const version = '5.0.3';
+const version = '5.1.1';
 const state = {
     _el: null,
     _template: null,
