@@ -350,9 +350,9 @@ export function setData(
           unMountedHook && unMountedHook();
           state._el.innerHTML = "";
           unMountedHook = null;
-          mount((state.oldTree = state._template()), state._el);
-          mountHook && mountHook();
-          mountHook = null;
+          state.isMounted = false;
+          const tem = state._template();
+          mountNode(tem, state._el);
         } else if (options && options.name === "useCustomElement") {
           const oldTree = _components.get(
             _com_[options.customElement.id]
