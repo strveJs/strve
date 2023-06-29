@@ -28,7 +28,7 @@ export declare let propsData: any;
 export declare function mount(vnode: vnodeType, container: HTMLElement | Node, anchor?: Node): void;
 export declare function onMounted(fn: Function): void;
 export declare function onUnmounted(fn: Function): void;
-export declare function nextTick(fn: Function): void;
+export declare const nextTick: (fn: () => void) => Promise<void>;
 export declare function mountNode(dom: vnodeType, selector?: Node, status?: string, name?: string): void;
 export declare function setData(callback: Function, options: setDataOptionsType): Promise<void>;
 export declare function defineCustomElement(options: customElementType, tag: string): void;

@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.1.1
+ * Strve.js v5.2.0
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -10,30 +10,30 @@
 })(this, (function (exports) { 'use strict';
 
     // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-    const HTML_TAGS = 'html,body,base,head,link,meta,style,title,address,article,aside,footer,' +
-        'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
-        'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
-        'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
-        'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
-        'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
-        'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
-        'option,output,progress,select,textarea,details,dialog,menu,' +
-        'summary,template,blockquote,iframe,tfoot';
+    const HTML_TAGS = "html,body,base,head,link,meta,style,title,address,article,aside,footer," +
+        "header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption," +
+        "figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code," +
+        "data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup," +
+        "time,u,var,wbr,area,audio,map,track,video,embed,object,param,source," +
+        "canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td," +
+        "th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup," +
+        "option,output,progress,select,textarea,details,dialog,menu," +
+        "summary,template,blockquote,iframe,tfoot";
     // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-    const SVG_TAGS = 'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
-        'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
-        'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
-        'feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur,' +
-        'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
-        'linearGradient,stop,radialGradient,' +
-        'animateTransform,animateMotion';
+    const SVG_TAGS = "svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face" +
+        "foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern," +
+        "polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view," +
+        "feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur," +
+        "feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight," +
+        "linearGradient,stop,radialGradient," +
+        "animateTransform,animateMotion";
     const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
     const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
     function isXlink(name) {
-        return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
+        return name.charAt(5) === ":" && name.slice(0, 5) === "xlink";
     }
     function isComplexType(v) {
-        const typeData = ['object', 'array', 'function', 'regexp', 'date', 'math'];
+        const typeData = ["object", "array", "function", "regexp", "date", "math"];
         return typeData.indexOf(getType(v)) !== -1;
     }
     function getType(v) {
@@ -43,10 +43,10 @@
             .toLowerCase();
     }
     // Object and array is not supported,But you can use JSON.stringify() to convert it to string type
-    makeMap('function,regexp,date,math,undefined,null,boolean,string,number,symbol,bigInt');
+    makeMap("function,regexp,date,math,undefined,null,boolean,string,number,symbol,bigInt");
     function makeMap(str) {
         const map = Object.create(null);
-        const list = str.split(',');
+        const list = str.split(",");
         for (let i = 0; i < list.length; i++) {
             map[list[i]] = true;
         }
@@ -55,25 +55,25 @@
         };
     }
     function isVnode(vnodes) {
-        if (vnodes.hasOwnProperty('tag') &&
-            vnodes.hasOwnProperty('props') &&
-            vnodes.hasOwnProperty('children')) {
+        if (vnodes.hasOwnProperty("tag") &&
+            vnodes.hasOwnProperty("props") &&
+            vnodes.hasOwnProperty("children")) {
             return true;
         }
     }
     function checkVnode(vnodes) {
-        if (getType(vnodes) === 'array') {
+        if (getType(vnodes) === "array") {
             for (let index = 0; index < vnodes.length; index++) {
                 if (isVnode(vnodes[index])) {
                     return true;
                 }
             }
         }
-        else if (getType(vnodes) === 'object') {
+        else if (getType(vnodes) === "object") {
             return isVnode(vnodes);
         }
     }
-    const isComplexDataType = (obj) => (typeof obj === 'object' || typeof obj === 'function') && obj !== null;
+    const isComplexDataType = (obj) => (typeof obj === "object" || typeof obj === "function") && obj !== null;
     function isSameObject(obj1, obj2) {
         if (!isComplexDataType(obj1) || !isComplexDataType(obj2)) {
             return obj1 === obj2;
@@ -95,19 +95,19 @@
         return true;
     }
     const namespaceMap = {
-        svg: 'http://www.w3.org/2000/svg',
-        math: 'http://www.w3.org/1998/Math/MathML',
+        svg: "http://www.w3.org/2000/svg",
+        math: "http://www.w3.org/1998/Math/MathML",
     };
-    const xlinkNS = 'http://www.w3.org/1999/xlink';
+    const xlinkNS = "http://www.w3.org/1999/xlink";
     function getXlinkProp(name) {
-        return isXlink(name) ? name.slice(6, name.length) : '';
+        return isXlink(name) ? name.slice(6, name.length) : "";
     }
     function getTagNamespace(tag) {
         if (isSVG(tag)) {
-            return 'svg';
+            return "svg";
         }
-        if (tag === 'math') {
-            return 'math';
+        if (tag === "math") {
+            return "math";
         }
     }
     function createElementNS(namespace, tagName) {
@@ -121,13 +121,13 @@
     function addEvent(el, props) {
         for (let index = 0; index < Object.keys(props).length; index++) {
             const element = Object.keys(props)[index].toString();
-            if (element.startsWith('on')) {
-                const name = element.split('on')[1][0].toLowerCase() +
-                    element.split('on')[1].substring(1);
+            if (element.startsWith("on")) {
+                const name = element.split("on")[1][0].toLowerCase() +
+                    element.split("on")[1].substring(1);
                 el.addEventListener(name, props[element]);
             }
-            else if (element.startsWith('@')) {
-                const name = element.split('@')[1];
+            else if (element.startsWith("@")) {
+                const name = element.split("@")[1];
                 el.addEventListener(name, props[element]);
             }
         }
@@ -139,12 +139,12 @@
         else {
             el.removeAttribute(key);
         }
-        if (key.startsWith('on')) {
-            const name = key.split('on')[1][0].toLowerCase() + key.split('on')[1].substring(1);
+        if (key.startsWith("on")) {
+            const name = key.split("on")[1][0].toLowerCase() + key.split("on")[1].substring(1);
             el.removeEventListener(name, oldProps[key]);
         }
-        else if (key.startsWith('@')) {
-            const name = key.split('@')[1];
+        else if (key.startsWith("@")) {
+            const name = key.split("@")[1];
             el.removeEventListener(name, oldProps[key]);
         }
     }
@@ -158,15 +158,15 @@
             return createElementNS(getTagNamespace(tag), tag);
         }
         // Fragment
-        else if (tag === 'fragment' || tag === 'component') {
+        else if (tag === "fragment" || tag === "component") {
             return document.createDocumentFragment();
         }
         // Comment
-        else if (tag === 'comment' || tag === 'null') {
+        else if (tag === "comment" || tag === "null") {
             return document.createComment(tag);
         }
         // Web-components
-        else if (tag.indexOf('-') !== -1) {
+        else if (tag.indexOf("-") !== -1) {
             return document.createElement(tag);
         }
         // Default
@@ -176,7 +176,7 @@
     }
     function setFragmentNode(dom) {
         const fragment = {
-            tag: 'fragment',
+            tag: "fragment",
             props: null,
             children: dom,
         };
@@ -188,12 +188,12 @@
 
     const _com_ = Object.create(null);
     const _components = new WeakMap();
-    const flag = ['$key', '$name', '$props'];
-    let componentName = '';
+    const flag = ["$key", "$name", "$props"];
+    let componentName = "";
     const domInfo = Object.create(null);
     let propsData = reactive(Object.create(null));
     function reactive(target = {}) {
-        if (typeof target !== 'object' || target === null) {
+        if (typeof target !== "object" || target === null) {
             return target;
         }
         const proxyConf = {
@@ -229,7 +229,7 @@
                 addEvent(el, vnode.props);
                 if (vnode.props.hasOwnProperty(flag[0])) {
                     vnode.el = el;
-                    if (getType(vnode.props[flag[0]]) === 'string') {
+                    if (getType(vnode.props[flag[0]]) === "string") {
                         domInfo[vnode.props[flag[0]]] = el;
                     }
                 }
@@ -243,7 +243,7 @@
                 }
                 for (const key in vnode.props) {
                     if (vnode.props.hasOwnProperty(key)) {
-                        if (getType(vnode.props[key]) !== 'function') {
+                        if (getType(vnode.props[key]) !== "function") {
                             if (isXlink(key)) {
                                 el.setAttributeNS(xlinkNS, key, vnode.props[key]);
                             }
@@ -253,7 +253,7 @@
                                 }
                             }
                         }
-                        if (getType(vnode.props[key]) === 'object') {
+                        if (getType(vnode.props[key]) === "object") {
                             setStyleProp(el, vnode.props[key]);
                         }
                     }
@@ -262,7 +262,7 @@
             if (vnode.children) {
                 updateChildrenNode(vnode.children, el, mountChildren);
                 function mountChildren() {
-                    if (getType(vnode.children[0]) === 'array') {
+                    if (getType(vnode.children[0]) === "array") {
                         vnode.children[0].forEach((child) => {
                             if (isVnode(child)) {
                                 mount(child, el);
@@ -270,7 +270,7 @@
                         });
                     }
                     else {
-                        if (getType(vnode.children) === 'array') {
+                        if (getType(vnode.children) === "array") {
                             vnode.children.forEach((child) => {
                                 if (isVnode(child)) {
                                     mount(child, el);
@@ -305,7 +305,7 @@
                     let [newValue, oldValue] = [newProps[key], oldProps[key]];
                     if (newValue !== oldValue) {
                         if (newValue !== null) {
-                            if (getType(newValue) !== 'function' && !flag.includes(key)) {
+                            if (getType(newValue) !== "function" && !flag.includes(key)) {
                                 el[key] && (el[key] = newValue); // property
                                 if (isXlink(key)) {
                                     el.setAttributeNS(xlinkNS, key, newValue);
@@ -313,14 +313,14 @@
                                 else {
                                     el.setAttribute(key, newValue);
                                 }
-                                if (getType(newValue) === 'object') {
+                                if (getType(newValue) === "object") {
                                     setStyleProp(el, newValue);
                                 }
                             }
                             else {
-                                if (key.startsWith('on')) {
-                                    const name = key.split('on')[1][0].toLowerCase() +
-                                        key.split('on')[1].substring(1);
+                                if (key.startsWith("on")) {
+                                    const name = key.split("on")[1][0].toLowerCase() +
+                                        key.split("on")[1].substring(1);
                                     el.addEventListener(name, newValue, false);
                                 }
                             }
@@ -343,11 +343,11 @@
             if (!isSameObject(ocs, ncs)) {
                 updateChildrenNode(ncs, el, patchChildren);
                 function patchChildren() {
-                    if (getType(oc) !== 'array' && getType(nc) === 'array') {
-                        el.innerHTML = '';
+                    if (getType(oc) !== "array" && getType(nc) === "array") {
+                        el.innerHTML = "";
                         nc.forEach((c) => mount(c, el));
                     }
-                    else if (getType(oc) === 'array' && getType(nc) === 'array') {
+                    else if (getType(oc) === "array" && getType(nc) === "array") {
                         patchNode(oc, nc, el, status);
                     }
                     else {
@@ -358,7 +358,7 @@
         }
     }
     function patchNode(o, n, el, status) {
-        if (status === 'useFirstKey') {
+        if (status === "useFirstKey") {
             for (let i = 1; i <= Math.max(o.length, n.length); i++) {
                 if (!o[o.length - i]) {
                     mount(n[n.length - i], o[o.length - 1].el.parentNode, o[0].el);
@@ -390,7 +390,7 @@
             el && updateTextNode(childNode, el);
         }
         else if (childNode.length > 1 && !checkVnode(childNode)) {
-            el && updateTextNode(childNode.join().replace(/,/g, ''), el);
+            el && updateTextNode(childNode.join().replace(/,/g, ""), el);
         }
         else if (isComplexType(childNode[0]) &&
             !childNode[0].tag &&
@@ -403,9 +403,9 @@
     }
     function updateTextNode(val, el) {
         if (isComplexType(val)) {
-            if (getType(val) === 'function' ||
-                getType(val) === 'regexp' ||
-                getType(val) === 'array') {
+            if (getType(val) === "function" ||
+                getType(val) === "regexp" ||
+                getType(val) === "array") {
                 el.textContent = String(val);
             }
             else {
@@ -424,10 +424,8 @@
     function onUnmounted(fn) {
         unMountedHook = fn;
     }
-    let nextTickHook = null;
-    function nextTick(fn) {
-        nextTickHook = fn;
-    }
+    const p = getType(Promise) !== "undefined" && Promise.resolve();
+    const nextTick = (fn) => p.then(fn);
     function mountNode(dom, selector, status, name) {
         if (!state.isMounted) {
             const _template = useFragmentNode(dom);
@@ -435,6 +433,7 @@
             state.oldTree = _template;
             state.isMounted = true;
             mountHook && mountHook();
+            mountHook = null;
         }
         else {
             const newTree = useFragmentNode(dom);
@@ -446,26 +445,27 @@
         }
     }
     function setData(callback, options) {
-        if (getType(callback) === 'function' && getType(Promise) !== 'undefined') {
+        if (getType(callback) === "function" && getType(Promise) !== "undefined") {
             return Promise.resolve()
                 .then(() => {
                 callback();
             })
                 .then(() => {
-                if (options && options.status === 'useRouter') {
+                if (options && options.status === "useRouter") {
                     unMountedHook && unMountedHook();
-                    state._el.innerHTML = '';
+                    state._el.innerHTML = "";
                     unMountedHook = null;
                     mount((state.oldTree = state._template()), state._el);
                     mountHook && mountHook();
+                    mountHook = null;
                 }
-                else if (options && options.name === 'useCustomElement') {
+                else if (options && options.name === "useCustomElement") {
                     const oldTree = _components.get(_com_[options.customElement.id]).template;
                     const props = _components.get(_com_[options.customElement.id]).props;
                     const newTree = useFragmentNode(options.customElement.template(props));
                     patch(oldTree, newTree, options.status);
                 }
-                else if (options && typeof options.name === 'function') {
+                else if (options && typeof options.name === "function") {
                     const name = options.name.name;
                     const _component = options.name();
                     if (componentName !== name) {
@@ -478,7 +478,6 @@
                     const status = options && options.status ? options.status : null;
                     mountNode(state._template(), null, status);
                 }
-                nextTickHook && nextTickHook();
             })
                 .catch((err) => console.error(err));
         }
@@ -501,15 +500,15 @@
                 this.isComMounted = false;
                 this.comOldTree = Object.create(null);
                 if (options.template && options.id) {
-                    const t = document.createElement('template');
-                    t.setAttribute('id', options.id);
+                    const t = document.createElement("template");
+                    t.setAttribute("id", options.id);
                     const content = t.content.cloneNode(true);
                     if (options.styles && Array.isArray(options.styles)) {
-                        const s = document.createElement('style');
-                        s.textContent = options.styles.join('');
+                        const s = document.createElement("style");
+                        s.textContent = options.styles.join("");
                         content.appendChild(s);
                     }
-                    this.shadow = this.attachShadow({ mode: 'open' });
+                    this.shadow = this.attachShadow({ mode: "open" });
                     this.shadow.appendChild(content);
                     if (!options.attributeChanged) {
                         const tem = useFragmentNode(options.template());
@@ -526,21 +525,21 @@
             connectedCallback() {
                 const arg = arguments;
                 options.lifetimes &&
-                    typeof options.lifetimes.connectedCallback === 'function' &&
+                    typeof options.lifetimes.connectedCallback === "function" &&
                     options.lifetimes.connectedCallback(arg);
             }
             // Called when a custom element is disconnected from the document DOM.
             disconnectedCallback() {
                 const arg = arguments;
                 options.lifetimes &&
-                    typeof options.lifetimes.disconnectedCallback === 'function' &&
+                    typeof options.lifetimes.disconnectedCallback === "function" &&
                     options.lifetimes.disconnectedCallback(arg);
             }
             // Called when a custom element is moved to a new document.
             adoptedCallback() {
                 const arg = arguments;
                 options.lifetimes &&
-                    typeof options.lifetimes.adoptedCallback === 'function' &&
+                    typeof options.lifetimes.adoptedCallback === "function" &&
                     options.lifetimes.adoptedCallback(arg);
             }
             // Called when an attribute of a custom element is added, removed, or changed.
@@ -570,12 +569,12 @@
                 }
                 if (options.immediateProps) {
                     options.lifetimes &&
-                        typeof options.lifetimes.attributeChangedCallback === 'function' &&
+                        typeof options.lifetimes.attributeChangedCallback === "function" &&
                         options.lifetimes.attributeChangedCallback(arg);
                 }
             }
         }
-        if (typeof tag === 'string' && tag.indexOf('-') !== -1) {
+        if (typeof tag === "string" && tag.indexOf("-") !== -1) {
             customElements.define(tag, customElement);
         }
         else {
@@ -583,7 +582,7 @@
         }
     }
 
-    const version = '5.1.1';
+    const version = '5.2.0';
     const state = {
         _el: null,
         _template: null,

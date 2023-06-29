@@ -1,51 +1,51 @@
 {
-	"name": "strve-js",
-	"version": "5.1.1",
-	"description": "A JS library that can convert strings into view",
-	"main": "dist/strve.full.js",
-	"module": "dist/strve.runtime-esm.js",
-	"unpkg": "dist/strve.full.prod.js",
-	"jsdelivr": "dist/strve.full.prod.js",
-	"typings": "types/index.d.ts",
-	"files": [
-		"dist",
-		"types"
-	],
-	"scripts": {
-		"tsc": "tsc",
-		"build": "npm run build-red && npm run build-rep && npm run build-fed && npm run build-fep && npm run build-fd && npm run build-fp",
-		"build-red": "rollup -c config/index.js --environment TARGET:runtime-esm-dev",
-		"build-rep": "rollup -c config/index.js --environment TARGET:runtime-esm-prod",
-		"build-fed": "rollup -c config/index.js --environment TARGET:full-esm-dev",
-		"build-fep": "rollup -c config/index.js --environment TARGET:full-esm-prod",
-		"build-fd": "rollup -c config/index.js --environment TARGET:full-dev",
-		"build-fp": "rollup -c config/index.js --environment TARGET:full-prod"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/maomincoding/strve.git"
-	},
-	"private": false,
-	"keywords": [
-		"strve",
-		"strvejs",
-		"dom",
-		"mvvm",
-		"virtual dom",
-		"html",
-		"template",
-		"string"
-	],
-	"author": "maomincoding",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/maomincoding/strve/issues"
-	},
-	"homepage": "https://github.com/maomincoding/strve#readme",
-	"devDependencies": {
-		"@rollup/plugin-replace": "^5.0.2",
-		"rollup": "^2.57.0",
-		"rollup-plugin-terser": "^7.0.2",
-		"typescript": "^4.6.3"
-	}
+  "name": "strve-js",
+  "version": "5.2.0",
+  "description": "A JS library that can convert strings into view",
+  "main": "dist/strve.full.js",
+  "module": "dist/strve.runtime-esm.js",
+  "unpkg": "dist/strve.full.prod.js",
+  "jsdelivr": "dist/strve.full.prod.js",
+  "typings": "types/index.d.ts",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "scripts": {
+    "tsc": "tsc",
+    "build": "tsc && npm run build-red && npm run build-rep && npm run build-fed && npm run build-fep && npm run build-fd && npm run build-fp",
+    "build-red": "rollup -c config/index.js --environment TARGET:runtime-esm-dev",
+    "build-rep": "rollup -c config/index.js --environment TARGET:runtime-esm-prod",
+    "build-fed": "rollup -c config/index.js --environment TARGET:full-esm-dev",
+    "build-fep": "rollup -c config/index.js --environment TARGET:full-esm-prod",
+    "build-fd": "rollup -c config/index.js --environment TARGET:full-dev",
+    "build-fp": "rollup -c config/index.js --environment TARGET:full-prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maomincoding/strve.git"
+  },
+  "private": false,
+  "keywords": [
+    "strve",
+    "strvejs",
+    "dom",
+    "mvvm",
+    "virtual dom",
+    "html",
+    "template",
+    "string"
+  ],
+  "author": "maomincoding",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/maomincoding/strve/issues"
+  },
+  "homepage": "https://github.com/maomincoding/strve#readme",
+  "devDependencies": {
+    "@rollup/plugin-replace": "^5.0.2",
+    "rollup": "^2.57.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "typescript": "^4.6.3"
+  }
 }

@@ -1,4 +1,4 @@
-import { vnodeType } from './diff';
+import { vnodeType } from "./diff";
 interface HTMLElementElType {
     [style: string]: any;
 }
