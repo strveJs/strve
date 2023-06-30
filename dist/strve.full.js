@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.2.0
+ * Strve.js v5.2.1
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -456,8 +456,9 @@
                     state._el.innerHTML = "";
                     unMountedHook = null;
                     state.isMounted = false;
-                    const tem = state._template();
-                    mountNode(tem, state._el);
+                    domInfo["$router-view"].innerHTML = "";
+                    const tem = options.routerView();
+                    mountNode(tem, domInfo["$router-view"]);
                 }
                 else if (options && options.name === "useCustomElement") {
                     const oldTree = _components.get(_com_[options.customElement.id]).template;
@@ -582,7 +583,7 @@
         }
     }
 
-    const version = '5.2.0';
+    const version = '5.2.1';
     const state = {
         _el: null,
         _template: null,

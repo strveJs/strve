@@ -22,6 +22,7 @@ interface setDataOptionsType {
     status: string;
     name: Function | string;
     customElement: customElementType;
+    routerView: Function;
 }
 export declare const domInfo: any;
 export declare let propsData: any;
