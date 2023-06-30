@@ -1,6 +1,6 @@
 {
   "name": "strve-js",
-  "version": "5.2.2",
+  "version": "5.2.3",
   "description": "A JS library that can convert strings into view",
   "main": "dist/strve.full.js",
   "module": "dist/strve.runtime-esm.js",

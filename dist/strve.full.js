@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.2.2
+ * Strve.js v5.2.3
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -582,7 +582,7 @@
         }
     }
 
-    const version = '5.2.2';
+    const version = '5.2.3';
     const state = {
         _el: null,
         _template: null,
