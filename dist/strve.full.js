@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.2.1
+ * Strve.js v5.2.2
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -453,7 +453,6 @@
                 .then(() => {
                 if (options && options.status === "useRouter") {
                     unMountedHook && unMountedHook();
-                    state._el.innerHTML = "";
                     unMountedHook = null;
                     state.isMounted = false;
                     domInfo["$router-view"].innerHTML = "";
@@ -583,7 +582,7 @@
         }
     }
 
-    const version = '5.2.1';
+    const version = '5.2.2';
     const state = {
         _el: null,
         _template: null,

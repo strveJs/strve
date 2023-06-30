@@ -349,7 +349,6 @@ export function setData(
       .then(() => {
         if (options && options.status === "useRouter") {
           unMountedHook && unMountedHook();
-          state._el.innerHTML = "";
           unMountedHook = null;
           state.isMounted = false;
           domInfo["$router-view"].innerHTML = "";
