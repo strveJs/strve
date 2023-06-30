@@ -41,7 +41,6 @@ interface setDataOptionsType {
   status: string;
   name: Function | string;
   customElement: customElementType;
-  routerView: Function;
 }
 
 const _com_: any = Object.create(null);
@@ -351,9 +350,9 @@ export function setData(
           unMountedHook && unMountedHook();
           unMountedHook = null;
           state.isMounted = false;
-          domInfo["$router-view"].innerHTML = "";
-          const tem = options.routerView();
-          mountNode(tem, domInfo["$router-view"]);
+          state._el.innerHTML = "";
+          const tem = state._template();
+          mountNode(tem, state._el);
         } else if (options && options.name === "useCustomElement") {
           const oldTree = _components.get(
             _com_[options.customElement.id]
