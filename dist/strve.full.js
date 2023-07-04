@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.6.0
+ * Strve.js v5.6.1
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -305,7 +305,7 @@
                     let [newValue, oldValue] = [newProps[key], oldProps[key]];
                     if (newValue !== oldValue) {
                         if (newValue !== null) {
-                            if (getType(newValue) !== "function" && !flag.includes(key)) {
+                            if (getType(newValue) !== "function") {
                                 el[key] && (el[key] = newValue); // property
                                 if (isXlink(key)) {
                                     el.setAttributeNS(xlinkNS, key, newValue);
@@ -315,13 +315,6 @@
                                 }
                                 if (getType(newValue) === "object") {
                                     setStyleProp(el, newValue);
-                                }
-                            }
-                            else {
-                                if (key.startsWith("on")) {
-                                    const name = key.split("on")[1][0].toLowerCase() +
-                                        key.split("on")[1].substring(1);
-                                    el.addEventListener(name, newValue, false);
                                 }
                             }
                         }
@@ -582,7 +575,7 @@
         }
     }
 
-    const version = '5.6.0';
+    const version = '5.6.1';
     const state = {
         _el: null,
         _template: null,

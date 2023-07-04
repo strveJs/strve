@@ -183,24 +183,15 @@ function patch(n1: vnodeType, n2: vnodeType, status?: string): void {
         let [newValue, oldValue] = [newProps[key], oldProps[key]];
         if (newValue !== oldValue) {
           if (newValue !== null) {
-            if (getType(newValue) !== "function" && !flag.includes(key)) {
+            if (getType(newValue) !== "function") {
               el[key] && (el[key] = newValue); // property
-
               if (isXlink(key)) {
                 el.setAttributeNS(xlinkNS, key, newValue);
               } else {
                 el.setAttribute(key, newValue);
               }
-
               if (getType(newValue) === "object") {
                 setStyleProp(el, newValue);
-              }
-            } else {
-              if (key.startsWith("on")) {
-                const name =
-                  key.split("on")[1][0].toLowerCase() +
-                  key.split("on")[1].substring(1);
-                el.addEventListener(name, newValue, false);
               }
             }
           } else {
