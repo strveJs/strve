@@ -1,5 +1,5 @@
 /*!
- * Strve.js v5.6.1
+ * Strve.js v5.6.2
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -290,6 +290,7 @@
     }
     function patch(n1, n2, status) {
         const oldProps = n1.props || {};
+        const newProps = n2.props || {};
         if (oldProps.hasOwnProperty(flag[0]) && n1.tag !== n2.tag) {
             const parent = n1.el.parentNode;
             const anchor = n1.el.nextSibling;
@@ -298,8 +299,7 @@
         }
         else {
             let el = null;
-            if (oldProps.hasOwnProperty(flag[0])) {
-                const newProps = n2.props || {};
+            if (oldProps.hasOwnProperty(flag[0]) && newProps.hasOwnProperty(flag[0])) {
                 el = n2.el = n1.el;
                 for (const key in newProps) {
                     let [newValue, oldValue] = [newProps[key], oldProps[key]];
@@ -316,6 +316,10 @@
                                 if (getType(newValue) === "object") {
                                     setStyleProp(el, newValue);
                                 }
+                            }
+                            else {
+                                removeEvent(el, key, oldProps);
+                                addEvent(el, newProps);
                             }
                         }
                         else {
@@ -575,7 +579,7 @@
         }
     }
 
-    const version = '5.6.1';
+    const version = '5.6.2';
     const state = {
         _el: null,
         _template: null,

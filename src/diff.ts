@@ -167,6 +167,7 @@ export function mount(
 
 function patch(n1: vnodeType, n2: vnodeType, status?: string): void {
   const oldProps: any = n1.props || {};
+  const newProps: any = n2.props || {};
 
   if (oldProps.hasOwnProperty(flag[0]) && n1.tag !== n2.tag) {
     const parent = n1.el.parentNode;
@@ -175,8 +176,7 @@ function patch(n1: vnodeType, n2: vnodeType, status?: string): void {
     mount(n2, parent, anchor);
   } else {
     let el: any = null;
-    if (oldProps.hasOwnProperty(flag[0])) {
-      const newProps = n2.props || {};
+    if (oldProps.hasOwnProperty(flag[0]) && newProps.hasOwnProperty(flag[0])) {
       el = n2.el = n1.el;
 
       for (const key in newProps) {
@@ -193,6 +193,9 @@ function patch(n1: vnodeType, n2: vnodeType, status?: string): void {
               if (getType(newValue) === "object") {
                 setStyleProp(el, newValue);
               }
+            } else {
+              removeEvent(el, key, oldProps);
+              addEvent(el, newProps);
             }
           } else {
             removeEvent(el, key, oldProps);
