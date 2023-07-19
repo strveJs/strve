@@ -16,6 +16,10 @@ A JS library that can convert strings into view.
 
 To learn more about Strve, check [its documentation](https://maomincoding.github.io/strve-doc/).
 
+## Usage Trends
+
+https://npm-compare.com/strve-js
+
 ## License
 
 [MIT](http://opensource.org/licenses/MIT)
