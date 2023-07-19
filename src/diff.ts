@@ -293,14 +293,24 @@ function updateTextNode(val: any, el: HTMLElement): void {
   }
 }
 
-let mountHook: Function | null = null;
-export function onMounted(fn: Function): void {
-  mountHook = fn;
+let mountHook: Function[] = [];
+export function onMounted(fn: Function |  null = null): void {
+  if(fn === null) return 
+    if(typeof fn !== 'function'){
+        console.error(`[Strve warn]: The parameter of onMounted is not a function!`)
+        return
+    }
+  mountHook.push(fn);
 }
 
-let unMountedHook: Function | null = null;
-export function onUnmounted(fn: Function): void {
-  unMountedHook = fn;
+let unMountedHook: Function[] = [];
+export function onUnmounted(fn: Function |  null = null): void {
+  if(fn === null) return 
+  if(typeof fn !== 'function'){
+      console.error(`[Strve warn]: The parameter of onUnmounted is not a function!`)
+      return
+  }
+  unMountedHook.push(fn);
 }
 
 const p = getType(Promise) !== "undefined" && Promise.resolve();
@@ -317,8 +327,12 @@ export function mountNode(
     mount(_template, selector);
     state.oldTree = _template;
     state.isMounted = true;
-    mountHook && mountHook();
-    mountHook = null;
+    if (mountHook.length > 0) {
+      for (let i = 0, j = mountHook.length; i < j; i++) {
+          mountHook[i] && mountHook[i]();
+      }
+    }
+    mountHook = [];
   } else {
     const newTree: vnodeType = useFragmentNode(dom);
     patch(state.oldTree, newTree, status);
@@ -341,8 +355,12 @@ export function setData(
       })
       .then(() => {
         if (options && options.status === "useRouter") {
-          unMountedHook && unMountedHook();
-          unMountedHook = null;
+          if (unMountedHook.length > 0) {
+            for (let i = 0, j = unMountedHook.length; i < j; i++) {
+                  unMountedHook[i] && unMountedHook[i]();
+              }
+          }
+          unMountedHook = [];
           state.isMounted = false;
           state._el.innerHTML = "";
           const tem = state._template();
