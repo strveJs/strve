@@ -413,13 +413,25 @@
             el.textContent = val ? val.toString() : String(val);
         }
     }
-    let mountHook = null;
-    function onMounted(fn) {
-        mountHook = fn;
+    let mountHook = [];
+    function onMounted(fn = null) {
+        if (fn === null)
+            return;
+        if (typeof fn !== 'function') {
+            console.error(`[Strve warn]: The parameter of onMounted is not a function!`);
+            return;
+        }
+        mountHook.push(fn);
     }
-    let unMountedHook = null;
-    function onUnmounted(fn) {
-        unMountedHook = fn;
+    let unMountedHook = [];
+    function onUnmounted(fn = null) {
+        if (fn === null)
+            return;
+        if (typeof fn !== 'function') {
+            console.error(`[Strve warn]: The parameter of onUnmounted is not a function!`);
+            return;
+        }
+        unMountedHook.push(fn);
     }
     const p = getType(Promise) !== "undefined" && Promise.resolve();
     const nextTick = (fn) => p.then(fn);
@@ -429,8 +441,12 @@
             mount(_template, selector);
             state.oldTree = _template;
             state.isMounted = true;
-            mountHook && mountHook();
-            mountHook = null;
+            if (mountHook.length > 0) {
+                for (let i = 0, j = mountHook.length; i < j; i++) {
+                    mountHook[i] && mountHook[i]();
+                }
+            }
+            mountHook = [];
         }
         else {
             const newTree = useFragmentNode(dom);
@@ -449,8 +465,12 @@
             })
                 .then(() => {
                 if (options && options.status === "useRouter") {
-                    unMountedHook && unMountedHook();
-                    unMountedHook = null;
+                    if (unMountedHook.length > 0) {
+                        for (let i = 0, j = unMountedHook.length; i < j; i++) {
+                            unMountedHook[i] && unMountedHook[i]();
+                        }
+                    }
+                    unMountedHook = [];
                     state.isMounted = false;
                     state._el.innerHTML = "";
                     const tem = state._template();
