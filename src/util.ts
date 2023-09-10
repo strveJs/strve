@@ -1,16 +1,11 @@
 import { vnodeType } from "./diff";
+
 interface namespaceMapType {
   [key: string]: string;
 }
 
 interface HTMLElementElType {
   [style: string]: any;
-}
-
-interface fragmentType {
-  tag: string;
-  props: null;
-  children: any;
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
@@ -42,6 +37,17 @@ export function isXlink(name: string): boolean {
   return name.charAt(5) === ":" && name.slice(0, 5) === "xlink";
 }
 
+function makeMap(str: string): (val: string) => boolean {
+  const map: any = Object.create(null);
+  const list: string[] = str.split(",");
+  for (let i = 0; i < list.length; i++) {
+    map[list[i]] = true;
+  }
+  return function (val: string) {
+    return map[val];
+  };
+}
+
 export function isComplexType(v: any): boolean {
   const typeData = ["object", "array", "function", "regexp", "date", "math"];
   return typeData.indexOf(getType(v)) !== -1;
@@ -54,39 +60,33 @@ export function getType(v: any): string {
     .toLowerCase();
 }
 
-// Object and array is not supported,But you can use JSON.stringify() to convert it to string type
-export const isToTextType: (val: string) => boolean = makeMap(
-  "function,regexp,date,math,undefined,null,boolean,string,number,symbol,bigInt"
-);
+export function isUndef(v: any) {
+  return v === undefined || v === null;
+}
 
-function makeMap(str: string): (val: string) => boolean {
-  const map: any = Object.create(null);
-  const list: string[] = str.split(",");
-  for (let i = 0; i < list.length; i++) {
-    map[list[i]] = true;
-  }
-  return function (val: string) {
-    return map[val];
-  };
+export function checkSameVnode(o: vnodeType, n: vnodeType) {
+  return o.tag === n.tag && o.key === n.key;
 }
 
 export function isVnode(vnodes: vnodeType): boolean {
-  if (
-    vnodes.hasOwnProperty("tag") &&
-    vnodes.hasOwnProperty("props") &&
-    vnodes.hasOwnProperty("children")
-  ) {
-    return true;
+  if (vnodes) {
+    return (
+      vnodes.hasOwnProperty("tag") &&
+      vnodes.hasOwnProperty("props") &&
+      vnodes.hasOwnProperty("children") &&
+      vnodes.hasOwnProperty("key") &&
+      vnodes.hasOwnProperty("el")
+    );
   }
 }
-
+function isArrayVnode(vnodes: Array<vnodeType>) {
+  for (let index = 0; index < vnodes.length; index++) {
+    return isVnode(vnodes[index]);
+  }
+}
 export function checkVnode(vnodes: any): boolean {
   if (getType(vnodes) === "array") {
-    for (let index = 0; index < vnodes.length; index++) {
-      if (isVnode(vnodes[index])) {
-        return true;
-      }
-    }
+    return isArrayVnode(vnodes);
   } else if (getType(vnodes) === "object") {
     return isVnode(vnodes);
   }
@@ -208,17 +208,4 @@ export function createNode(tag: string): Element | DocumentFragment | Comment {
   else {
     return document.createElement(tag);
   }
-}
-
-function setFragmentNode(dom: any): vnodeType {
-  const fragment: fragmentType = {
-    tag: "fragment",
-    props: null,
-    children: dom,
-  };
-  return fragment;
-}
-
-export function useFragmentNode(dom: vnodeType): vnodeType {
-  return !dom.tag ? setFragmentNode(dom) : dom;
 }

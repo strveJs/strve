@@ -6,19 +6,21 @@ import {
   isXlink,
   isSameObject,
   isVnode,
+  createNode,
   xlinkNS,
   setStyleProp,
   addEvent,
   removeEvent,
-  createNode,
-  useFragmentNode,
+  isUndef,
+  checkSameVnode,
 } from "./util";
 
 export interface vnodeType {
   tag: string;
   props: any;
-  children: any[];
-  el?: HTMLElement;
+  children: any;
+  el: any;
+  key: any;
 }
 
 interface lifetimesType {
@@ -43,17 +45,24 @@ interface setDataOptionsType {
   customElement: customElementType;
 }
 
-const _com_: any = Object.create(null);
-const _components: WeakMap<object, any> = new WeakMap();
-const flag: Array<string> = ["$key", "$name", "$props"];
-let componentName: string = "";
-export const domInfo: any = Object.create(null);
-export let propsData: any = reactive(Object.create(null));
-
 interface proxyConfType {
   [propName: string]: any;
 }
 
+const flag: Array<string> = ["$ref", "$name", "$props"];
+const _com_: any = Object.create(null);
+const _components: WeakMap<object, any> = new WeakMap();
+
+let componentName: string = "";
+let mountHook: Function[] = [];
+let unMountedHook: Function[] = [];
+
+// domInfo
+export const domInfo: any = Object.create(null);
+// propsData
+export let propsData: any = reactive(Object.create(null));
+
+// Responsive object handling
 function reactive<T extends proxyConfType>(target: object = {}): any {
   if (typeof target !== "object" || target === null) {
     return target;
@@ -65,15 +74,22 @@ function reactive<T extends proxyConfType>(target: object = {}): any {
       if (ownKeys.includes(key)) {
         const result = Reflect.get(target, key, receiver);
         return reactive(result);
+      } else if (typeof key === "symbol") {
+        // Handle symbol keys
+        const result = Reflect.get(target, key, receiver);
+        return reactive(result);
       }
     },
     set(target: T, key: string, val: any, receiver: any): boolean {
       if (val === target[key]) {
         return true;
       }
-
       const ownKeys = Reflect.ownKeys(target);
       if (ownKeys.includes(key) || Object.keys(_com_).includes(key)) {
+        const result = Reflect.set(target, key, val, receiver);
+        return result;
+      } else if (typeof key === "symbol") {
+        // Handle symbol keys
         const result = Reflect.set(target, key, val, receiver);
         return result;
       }
@@ -88,29 +104,59 @@ function reactive<T extends proxyConfType>(target: object = {}): any {
   return observed;
 }
 
-export function mount(
-  vnode: vnodeType,
-  container: HTMLElement | Node,
-  anchor?: Node
-): void {
-  if (vnode.tag) {
-    const el: any = createNode(vnode.tag);
+// Update text node
+function updateTextNode(val: any, el: HTMLElement): void {
+  if (isComplexType(val)) {
+    if (getType(val) === "array") {
+      if (val.length > 1) {
+        let _text = "";
 
-    if (vnode.props) {
+        for (let index = 0; index < val.length; index++) {
+          const c = val[index];
+          _text += isComplexType(c) ? JSON.stringify(c) : c;
+        }
+
+        el.textContent = _text;
+      } else if (val.length === 0) {
+        el.textContent = "";
+      } else {
+        const _text = JSON.stringify(val).replace(/,/g, "");
+        el.textContent = _text;
+      }
+    } else {
+      el.textContent = JSON.stringify(val);
+    }
+  } else {
+    el.textContent = val.toString();
+  }
+}
+
+// Convert virtual dom to real dom
+export function mount(vnode: vnodeType, container?: any, anchor?: any) {
+  // tag
+  if (!isUndef(vnode.tag)) {
+    const el: any = createNode(vnode.tag);
+    vnode.el = el;
+
+    // props
+    if (!isUndef(vnode.props)) {
       addEvent(el, vnode.props);
 
-      if (vnode.props.hasOwnProperty(flag[0])) {
-        vnode.el = el;
-        if (getType(vnode.props[flag[0]]) === "string") {
-          domInfo[vnode.props[flag[0]]] = el;
-        }
+      // domInfo
+      if (
+        vnode.props.hasOwnProperty(flag[0]) &&
+        getType(vnode.props[flag[0]]) === "string"
+      ) {
+        domInfo[vnode.props[flag[0]]] = el;
       }
 
+      // components
       if (vnode.props.hasOwnProperty(flag[1])) {
         _com_[vnode.props[flag[1]]] = Object.create(null);
-        _components.set(_com_[vnode.props[flag[1]]], vnode.children[0]);
+        _components.set(_com_[vnode.props[flag[1]]], vnode.children);
       }
 
+      // propsData
       if (
         vnode.props.hasOwnProperty(flag[1]) &&
         vnode.props.hasOwnProperty(flag[2])
@@ -118,6 +164,7 @@ export function mount(
         propsData[vnode.props[flag[1]]] = vnode.props[flag[2]];
       }
 
+      // props
       for (const key in vnode.props) {
         if (vnode.props.hasOwnProperty(key)) {
           if (getType(vnode.props[key]) !== "function") {
@@ -136,214 +183,218 @@ export function mount(
       }
     }
 
-    if (vnode.children) {
-      updateChildrenNode(vnode.children, el, mountChildren);
+    // children
+    if (!isUndef(vnode.children)) {
+      const childNode = vnode.children;
 
-      function mountChildren() {
-        if (getType(vnode.children[0]) === "array") {
-          vnode.children[0].forEach((child: vnodeType) => {
+      if (!checkVnode(childNode)) {
+        el && updateTextNode(childNode, el);
+      } else {
+        if (getType(childNode) === "array") {
+          for (let index = 0; index < childNode.length; index++) {
+            const child = childNode[index];
             if (isVnode(child)) {
               mount(child, el);
             }
-          });
-        } else {
-          if (getType(vnode.children) === "array") {
-            vnode.children.forEach((child: vnodeType) => {
-              if (isVnode(child)) {
-                mount(child, el);
-              }
-            });
           }
+        } else if (getType(childNode) === "object") {
+          mount(childNode, el);
         }
       }
     }
+
     if (anchor) {
       container.insertBefore(el, anchor);
-    } else {
+    } else if (container) {
       container.appendChild(el);
+    } else {
+      return el;
     }
   }
 }
 
-function patch(n1: vnodeType, n2: vnodeType, status?: string): void {
-  const oldProps: any = n1.props || {};
-  const newProps: any = n2.props || {};
-
-  if (oldProps.hasOwnProperty(flag[0]) && n1.tag !== n2.tag) {
-    const parent = n1.el.parentNode;
-    const anchor = n1.el.nextSibling;
-    parent.removeChild(n1.el);
-    mount(n2, parent, anchor);
+// diff
+function patch(oNode: vnodeType, nNode: vnodeType): void {
+  if (!checkSameVnode(oNode, nNode)) {
+    const parent = oNode.el.parentNode;
+    const anchor = oNode.el.nextSibling;
+    parent.removeChild(oNode.el);
+    mount(nNode, parent, anchor);
   } else {
-    let el: any = null;
-    if (oldProps.hasOwnProperty(flag[0]) && newProps.hasOwnProperty(flag[0])) {
-      el = n2.el = n1.el;
+    const el = (nNode.el = oNode.el);
 
-      for (const key in newProps) {
-        let [newValue, oldValue] = [newProps[key], oldProps[key]];
-        if (newValue !== oldValue) {
-          if (newValue !== null) {
-            if (getType(newValue) !== "function") {
-              el[key] && (el[key] = newValue); // property
-              if (isXlink(key)) {
-                el.setAttributeNS(xlinkNS, key, newValue);
-              } else {
-                el.setAttribute(key, newValue);
-              }
-              if (getType(newValue) === "object") {
-                setStyleProp(el, newValue);
-              }
+    // props
+    const oldProps = oNode.props || {};
+    const newProps = nNode.props || {};
+    for (const key in newProps) {
+      const newValue = newProps[key];
+      const oldValue = oldProps[key];
+
+      if (newValue !== oldValue) {
+        if (newValue !== null) {
+          if (getType(newValue) !== "function") {
+            el[key] && (el[key] = newValue); // property
+            if (isXlink(key)) {
+              el.setAttributeNS(xlinkNS, key, newValue);
             } else {
-              removeEvent(el, key, oldProps);
-              addEvent(el, newProps);
+              el.setAttribute(key, newValue);
+            }
+            if (getType(newValue) === "object") {
+              setStyleProp(el, newValue);
             }
           } else {
             removeEvent(el, key, oldProps);
+            addEvent(el, newProps);
           }
-        }
-      }
-
-      for (const key in oldProps) {
-        if (!(key in newProps)) {
+        } else {
           removeEvent(el, key, oldProps);
         }
       }
     }
+    for (const key in oldProps) {
+      if (!(key in newProps)) {
+        removeEvent(el, key, oldProps);
+      }
+    }
 
-    const oc: any = n1.children[0];
-    const nc: any = n2.children[0];
-    const ocs: any[] = n1.children;
-    const ncs: any[] = n2.children;
+    // children
+    const ocs = oNode.children;
+    const ncs = nNode.children;
+    if (!checkVnode(ocs) && !checkVnode(ncs) && !isSameObject(ocs, ncs)) {
+      el && updateTextNode(ncs, el);
+    } else if (isVnode(ocs) && isVnode(ncs)) {
+      patch(ocs, ncs);
+    } else if (getType(ocs) === "array" && getType(ncs) === "array") {
+      updateChildren(ocs, ncs, el);
+    }
+  }
+}
 
-    if (!isSameObject(ocs, ncs)) {
-      updateChildrenNode(ncs, el, patchChildren);
+// Two-ended algorithm
+function updateChildren(
+  oldCh: Array<vnodeType>,
+  newCh: Array<vnodeType>,
+  parentElm: HTMLElement
+) {
+  let oldStartIdx: number = 0;
+  let newStartIdx: number = 0;
+  let oldEndIdx: number = oldCh.length - 1;
+  let newEndIdx: number = newCh.length - 1;
+  let oldStartVnode: vnodeType = oldCh[0];
+  let newStartVnode: vnodeType = newCh[0];
+  let oldEndVnode: vnodeType = oldCh[oldEndIdx];
+  let newEndVnode: vnodeType = newCh[newEndIdx];
+  let keyMap: { [key: string]: any } = {};
 
-      function patchChildren() {
-        if (getType(oc) !== "array" && getType(nc) === "array") {
-          el.innerHTML = "";
-          nc.forEach((c: vnodeType) => mount(c, el));
-        } else if (getType(oc) === "array" && getType(nc) === "array") {
-          patchNode(oc, nc, el, status);
-        } else {
-          patchNode(ocs, ncs, el, status);
+  while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+    if (isUndef(oldStartVnode)) {
+      oldStartVnode = oldCh[++oldStartIdx];
+    } else if (isUndef(oldEndVnode)) {
+      oldEndVnode = oldCh[--oldEndIdx];
+    } else if (checkSameVnode(oldStartVnode, newStartVnode)) {
+      patch(oldStartVnode, newStartVnode);
+      oldStartVnode = oldCh[++oldStartIdx];
+      newStartVnode = newCh[++newStartIdx];
+    } else if (checkSameVnode(oldEndVnode, newEndVnode)) {
+      patch(oldEndVnode, newEndVnode);
+      oldEndVnode = oldCh[--oldEndIdx];
+      newEndVnode = newCh[--newEndIdx];
+    } else if (checkSameVnode(oldStartVnode, newEndVnode)) {
+      parentElm.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling);
+      patch(oldStartVnode, newEndVnode);
+      oldStartVnode = oldCh[++oldStartIdx];
+      newEndVnode = newCh[--newEndIdx];
+    } else if (checkSameVnode(oldEndVnode, newStartVnode)) {
+      parentElm.insertBefore(oldEndVnode.el, oldStartVnode.el);
+      patch(oldEndVnode, newStartVnode);
+      oldEndVnode = oldCh[--oldEndIdx];
+      newStartVnode = newCh[++newStartIdx];
+    } else {
+      if (!keyMap) {
+        keyMap = {};
+        for (let i = oldStartIdx; i <= oldEndIdx; i++) {
+          keyMap[oldCh[i].key] = i;
         }
       }
-    }
-  }
-}
-
-function patchNode(o: any[], n: any[], el: HTMLElement, status: string): void {
-  if (status === "useFirstKey") {
-    for (let i = 1; i <= Math.max(o.length, n.length); i++) {
-      if (!o[o.length - i]) {
-        mount(n[n.length - i], o[o.length - 1].el.parentNode, o[0].el);
-      } else if (!n[n.length - i]) {
-        el.removeChild(o[o.length - i].el);
+      const idxInOld = keyMap[newStartVnode.key];
+      if (isUndef(idxInOld)) {
+        parentElm.insertBefore(mount(newStartVnode), oldStartVnode.el);
       } else {
-        patch(o[o.length - i], n[n.length - i], status);
+        const oldVnode = oldCh[idxInOld];
+        parentElm.insertBefore(oldVnode.el, oldStartVnode.el);
+        patch(oldVnode, newStartVnode);
+        oldCh[idxInOld] = undefined;
       }
+      newStartVnode = newCh[++newStartIdx];
     }
-  } else {
-    for (let i = 0; i < Math.min(o.length, n.length); i++) {
-      patch(o[i], n[i], status);
+  }
+  if (newStartIdx <= newEndIdx) {
+    for (let i = newStartIdx; i <= newEndIdx; i++) {
+      const before = newCh[newEndIdx + 1]?.el || null;
+      parentElm.insertBefore(mount(newCh[i]), before);
     }
-    if (n.length > o.length) {
-      n.slice(o.length).forEach((c: vnodeType) => mount(c, el));
-    } else if (o.length > n.length) {
-      o.slice(n.length).forEach((c: vnodeType) => {
-        el.removeChild(c.el);
-      });
+  } else if (oldStartIdx <= oldEndIdx) {
+    for (let i = oldStartIdx; i <= oldEndIdx; i++) {
+      parentElm.removeChild(oldCh[i].el);
     }
   }
 }
 
-function updateChildrenNode(
-  childNode: any[],
-  el: HTMLElement,
-  setChildrenNode: Function
-): void {
-  if (childNode.length === 1 && !isComplexType(childNode[0])) {
-    el && updateTextNode(childNode, el);
-  } else if (childNode.length > 1 && !checkVnode(childNode)) {
-    el && updateTextNode(childNode.join().replace(/,/g, ""), el);
-  } else if (
-    isComplexType(childNode[0]) &&
-    !childNode[0].tag &&
-    !checkVnode(childNode[0])
-  ) {
-    el && updateTextNode(childNode[0], el);
-  } else {
-    setChildrenNode();
+// onMounted
+export function onMounted(fn: Function | null = null): void {
+  if (fn === null) return;
+  if (typeof fn !== "function") {
+    console.error(
+      `[Strve warn]: The parameter of onMounted is not a function!`
+    );
+    return;
   }
-}
-
-function updateTextNode(val: any, el: HTMLElement): void {
-  if (isComplexType(val)) {
-    if (
-      getType(val) === "function" ||
-      getType(val) === "regexp" ||
-      getType(val) === "array"
-    ) {
-      el.textContent = String(val);
-    } else {
-      el.textContent = JSON.stringify(val, null, 2);
-    }
-  } else {
-    el.textContent = val ? val.toString() : String(val);
-  }
-}
-
-let mountHook: Function[] = [];
-export function onMounted(fn: Function |  null = null): void {
-  if(fn === null) return 
-    if(typeof fn !== 'function'){
-        console.error(`[Strve warn]: The parameter of onMounted is not a function!`)
-        return
-    }
   mountHook.push(fn);
 }
 
-let unMountedHook: Function[] = [];
-export function onUnmounted(fn: Function |  null = null): void {
-  if(fn === null) return 
-  if(typeof fn !== 'function'){
-      console.error(`[Strve warn]: The parameter of onUnmounted is not a function!`)
-      return
+// onUnmounted
+export function onUnmounted(fn: Function | null = null): void {
+  if (fn === null) return;
+  if (typeof fn !== "function") {
+    console.error(
+      `[Strve warn]: The parameter of onUnmounted is not a function!`
+    );
+    return;
   }
   unMountedHook.push(fn);
 }
 
+// nextTick
 const p = getType(Promise) !== "undefined" && Promise.resolve();
 export const nextTick = (fn: () => void) => p.then(fn);
 
+// Mount node
 export function mountNode(
   dom: vnodeType,
-  selector?: Node,
-  status?: string,
+  selector?: HTMLElement,
   name?: string
 ): void {
   if (!state.isMounted) {
-    const _template: vnodeType = useFragmentNode(dom);
-    mount(_template, selector);
-    state.oldTree = _template;
+    mount(dom, selector);
+    state.oldTree = dom;
     state.isMounted = true;
     if (mountHook.length > 0) {
       for (let i = 0, j = mountHook.length; i < j; i++) {
-          mountHook[i] && mountHook[i]();
+        mountHook[i] && mountHook[i]();
       }
     }
     mountHook = [];
   } else {
-    const newTree: vnodeType = useFragmentNode(dom);
-    patch(state.oldTree, newTree, status);
+    const newTree = dom;
+    patch(state.oldTree, newTree);
     state.oldTree = newTree;
-
     if (name) {
       _components.set(_com_[name], dom);
     }
   }
 }
 
+// Change data
 export function setData(
   callback: Function,
   options: setDataOptionsType
@@ -354,47 +405,46 @@ export function setData(
         callback();
       })
       .then(() => {
+        // Router
         if (options && options.status === "useRouter") {
           if (unMountedHook.length > 0) {
             for (let i = 0, j = unMountedHook.length; i < j; i++) {
-                  unMountedHook[i] && unMountedHook[i]();
-              }
+              unMountedHook[i] && unMountedHook[i]();
+            }
           }
           unMountedHook = [];
           state.isMounted = false;
           state._el.innerHTML = "";
           const tem = state._template();
           mountNode(tem, state._el);
-        } else if (options && options.name === "useCustomElement") {
+        }
+        // Web Component
+        else if (options && options.name === "useCustomElement") {
           const oldTree = _components.get(
             _com_[options.customElement.id]
           ).template;
           const props = _components.get(_com_[options.customElement.id]).props;
-
-          const newTree = useFragmentNode(
-            options.customElement.template(props)
-          );
-          patch(oldTree, newTree, options.status);
-        } else if (options && typeof options.name === "function") {
-          const name: string = options.name.name;
-          const _component: vnodeType = options.name();
-
+          const newTree = options.customElement.template(props);
+          patch(oldTree, newTree);
+        }
+        // component
+        else if (options && typeof options.name === "function") {
+          const name = options.name.name;
+          const _component = options.name();
           if (componentName !== name) {
             componentName = name;
-            state.oldTree = useFragmentNode(_components.get(_com_[name]));
+            state.oldTree = _components.get(_com_[name]);
           }
-
-          mountNode(_component, null, options.status, name);
+          mountNode(_component, null, name);
         } else {
-          const status: string | null =
-            options && options.status ? options.status : null;
-          mountNode(state._template(), null, status);
+          mountNode(state._template(), null);
         }
       })
       .catch((err) => console.error(err));
   }
 }
 
+// Web Component
 export function defineCustomElement(options: customElementType, tag: string) {
   class customElement extends HTMLElement {
     shadow: ShadowRoot;
@@ -412,23 +462,19 @@ export function defineCustomElement(options: customElementType, tag: string) {
       this.props = Object.create(null);
       this.isComMounted = false;
       this.comOldTree = Object.create(null);
-
       if (options.template && options.id) {
         const t = document.createElement("template");
         t.setAttribute("id", options.id);
         const content = t.content.cloneNode(true);
-
         if (options.styles && Array.isArray(options.styles)) {
           const s = document.createElement("style");
           s.textContent = options.styles.join("");
           content.appendChild(s);
         }
-
         this.shadow = this.attachShadow({ mode: "open" });
         this.shadow.appendChild(content);
-
         if (!options.attributeChanged) {
-          const tem = useFragmentNode(options.template());
+          const tem = options.template();
           mount(tem, this.shadow);
           _com_[options.id] = Object.create(null);
           _components.set(_com_[options.id], {
@@ -438,7 +484,6 @@ export function defineCustomElement(options: customElementType, tag: string) {
         }
       }
     }
-
     // Called when the custom element is first connected to the document DOM.
     connectedCallback() {
       const arg = arguments;
@@ -446,7 +491,6 @@ export function defineCustomElement(options: customElementType, tag: string) {
         typeof options.lifetimes.connectedCallback === "function" &&
         options.lifetimes.connectedCallback(arg);
     }
-
     // Called when a custom element is disconnected from the document DOM.
     disconnectedCallback() {
       const arg = arguments;
@@ -454,7 +498,6 @@ export function defineCustomElement(options: customElementType, tag: string) {
         typeof options.lifetimes.disconnectedCallback === "function" &&
         options.lifetimes.disconnectedCallback(arg);
     }
-
     // Called when a custom element is moved to a new document.
     adoptedCallback() {
       const arg = arguments;
@@ -462,14 +505,12 @@ export function defineCustomElement(options: customElementType, tag: string) {
         typeof options.lifetimes.adoptedCallback === "function" &&
         options.lifetimes.adoptedCallback(arg);
     }
-
     // Called when an attribute of a custom element is added, removed, or changed.
     attributeChangedCallback() {
       const arg = arguments;
-
       if (options.attributeChanged && options.attributeChanged.length > 0) {
         this.props[arg[0]] = arg[2];
-        const tem = useFragmentNode(options.template(this.props));
+        const tem = options.template(this.props);
         if (!this.isComMounted) {
           mount(tem, this.shadow);
           _com_[options.id] = Object.create(null);
@@ -488,7 +529,6 @@ export function defineCustomElement(options: customElementType, tag: string) {
           this.comOldTree = tem;
         }
       }
-
       if (options.immediateProps) {
         options.lifetimes &&
           typeof options.lifetimes.attributeChangedCallback === "function" &&
@@ -496,11 +536,10 @@ export function defineCustomElement(options: customElementType, tag: string) {
       }
     }
   }
-
   if (typeof tag === "string" && tag.indexOf("-") !== -1) {
     customElements.define(tag, customElement);
   } else {
-    console.warn(
+    console.error(
       `[Strve warn]: [${tag}]>> please name the string with "-" as a custom element. `
     );
   }

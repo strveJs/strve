@@ -1,1 +1,1 @@
-export declare const h: (this: any, statics: any) => any;
+export declare const html: (this: any, statics: any) => any;

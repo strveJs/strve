@@ -1,6 +1,6 @@
 export { createApp, version } from './init';
 
-export { h } from './compile';
+export { html } from './compile';
 
 export {
 	setData,

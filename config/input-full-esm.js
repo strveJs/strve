@@ -1,5 +1,5 @@
 export { createApp, version } from '../lib/init.js';
-export { h } from '../lib/compile.js';
+export { html } from '../lib/compile.js';
 export {
 	setData,
 	onMounted,

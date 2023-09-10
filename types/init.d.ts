@@ -3,7 +3,6 @@ interface StateType {
     _template: Function | null;
     oldTree: any | null;
     isMounted: boolean;
-    observer: MutationObserver | null;
 }
 export declare const version: string;
 export declare const state: StateType;
