@@ -236,10 +236,7 @@ function patch(oNode: vnodeType, nNode: vnodeType): void {
 
       if (newValue !== oldValue) {
         if (!isUndef(newValue)) {
-          if (
-            getType(newValue) !== "function" &&
-            !newProps.hasOwnProperty("key")
-          ) {
+          if (getType(newValue) !== "function" && key !== "key") {
             el[key] && (el[key] = newValue); // property
             if (isXlink(key)) {
               el.setAttributeNS(xlinkNS, key, newValue);

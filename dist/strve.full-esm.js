@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.0.1
+ * Strve.js v6.0.2
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -351,8 +351,7 @@ function patch(oNode, nNode) {
             const oldValue = oldProps[key];
             if (newValue !== oldValue) {
                 if (!isUndef(newValue)) {
-                    if (getType(newValue) !== "function" &&
-                        !newProps.hasOwnProperty("key")) {
+                    if (getType(newValue) !== "function" && key !== "key") {
                         el[key] && (el[key] = newValue); // property
                         if (isXlink(key)) {
                             el.setAttributeNS(xlinkNS, key, newValue);
@@ -657,7 +656,7 @@ function defineCustomElement(options, tag) {
     }
 }
 
-const version = "6.0.1";
+const version = "6.0.2";
 const state = {
     _el: null,
     _template: null,
