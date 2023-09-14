@@ -14,5 +14,6 @@ export declare const xlinkNS: string;
 export declare function setStyleProp(el: HTMLElementElType, prototype: any): void;
 export declare function addEvent(el: HTMLElement, props: any): void;
 export declare function removeEvent(el: HTMLElement, key: string, oldProps: any): void;
+export declare function removeAttribute(el: HTMLElement, key: string, oldProps: any): void;
 export declare function createNode(tag: string): Element | DocumentFragment | Comment;
 export {};

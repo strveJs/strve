@@ -11,6 +11,7 @@ import {
   setStyleProp,
   addEvent,
   removeEvent,
+  removeAttribute,
   isUndef,
   checkSameVnode,
 } from "./util";
@@ -167,7 +168,10 @@ export function mount(vnode: vnodeType, container?: any, anchor?: any) {
       // props
       for (const key in vnode.props) {
         if (vnode.props.hasOwnProperty(key)) {
-          if (getType(vnode.props[key]) !== "function") {
+          if (
+            getType(vnode.props[key]) !== "function" &&
+            !vnode.props.hasOwnProperty("key")
+          ) {
             if (isXlink(key)) {
               el.setAttributeNS(xlinkNS, key, vnode.props[key]);
             } else {
@@ -231,8 +235,11 @@ function patch(oNode: vnodeType, nNode: vnodeType): void {
       const oldValue = oldProps[key];
 
       if (newValue !== oldValue) {
-        if (newValue !== null) {
-          if (getType(newValue) !== "function") {
+        if (!isUndef(newValue)) {
+          if (
+            getType(newValue) !== "function" &&
+            !newProps.hasOwnProperty("key")
+          ) {
             el[key] && (el[key] = newValue); // property
             if (isXlink(key)) {
               el.setAttributeNS(xlinkNS, key, newValue);
@@ -242,18 +249,21 @@ function patch(oNode: vnodeType, nNode: vnodeType): void {
             if (getType(newValue) === "object") {
               setStyleProp(el, newValue);
             }
-          } else {
+          } else if (
+            getType(newValue) === "function" &&
+            newValue.toString() !== oldValue.toString()
+          ) {
             removeEvent(el, key, oldProps);
             addEvent(el, newProps);
           }
         } else {
-          removeEvent(el, key, oldProps);
+          removeAttribute(el, key, oldProps);
         }
       }
     }
     for (const key in oldProps) {
       if (!(key in newProps)) {
-        removeEvent(el, key, oldProps);
+        removeAttribute(el, key, oldProps);
       }
     }
 

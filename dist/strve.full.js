@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.0.0
+ * Strve.js v6.0.1
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -140,12 +140,6 @@
         }
     }
     function removeEvent(el, key, oldProps) {
-        if (isXlink(key)) {
-            el.removeAttributeNS(xlinkNS, getXlinkProp(key));
-        }
-        else {
-            el.removeAttribute(key);
-        }
         if (key.startsWith("on")) {
             const name = key.split("on")[1][0].toLowerCase() + key.split("on")[1].substring(1);
             el.removeEventListener(name, oldProps[key]);
@@ -154,6 +148,15 @@
             const name = key.split("@")[1];
             el.removeEventListener(name, oldProps[key]);
         }
+    }
+    function removeAttribute(el, key, oldProps) {
+        if (isXlink(key)) {
+            el.removeAttributeNS(xlinkNS, getXlinkProp(key));
+        }
+        else {
+            el.removeAttribute(key);
+        }
+        removeEvent(el, key, oldProps);
     }
     function createNode(tag) {
         // Html
@@ -288,7 +291,8 @@
                 // props
                 for (const key in vnode.props) {
                     if (vnode.props.hasOwnProperty(key)) {
-                        if (getType(vnode.props[key]) !== "function") {
+                        if (getType(vnode.props[key]) !== "function" &&
+                            !vnode.props.hasOwnProperty("key")) {
                             if (isXlink(key)) {
                                 el.setAttributeNS(xlinkNS, key, vnode.props[key]);
                             }
@@ -352,8 +356,9 @@
                 const newValue = newProps[key];
                 const oldValue = oldProps[key];
                 if (newValue !== oldValue) {
-                    if (newValue !== null) {
-                        if (getType(newValue) !== "function") {
+                    if (!isUndef(newValue)) {
+                        if (getType(newValue) !== "function" &&
+                            !newProps.hasOwnProperty("key")) {
                             el[key] && (el[key] = newValue); // property
                             if (isXlink(key)) {
                                 el.setAttributeNS(xlinkNS, key, newValue);
@@ -365,19 +370,20 @@
                                 setStyleProp(el, newValue);
                             }
                         }
-                        else {
+                        else if (getType(newValue) === "function" &&
+                            newValue.toString() !== oldValue.toString()) {
                             removeEvent(el, key, oldProps);
                             addEvent(el, newProps);
                         }
                     }
                     else {
-                        removeEvent(el, key, oldProps);
+                        removeAttribute(el, key, oldProps);
                     }
                 }
             }
             for (const key in oldProps) {
                 if (!(key in newProps)) {
-                    removeEvent(el, key, oldProps);
+                    removeAttribute(el, key, oldProps);
                 }
             }
             // children
@@ -657,7 +663,7 @@
         }
     }
 
-    const version = "6.0.0";
+    const version = "6.0.1";
     const state = {
         _el: null,
         _template: null,

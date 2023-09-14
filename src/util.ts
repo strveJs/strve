@@ -167,12 +167,6 @@ export function addEvent(el: HTMLElement, props: any): void {
 }
 
 export function removeEvent(el: HTMLElement, key: string, oldProps: any): void {
-  if (isXlink(key)) {
-    el.removeAttributeNS(xlinkNS, getXlinkProp(key));
-  } else {
-    el.removeAttribute(key);
-  }
-
   if (key.startsWith("on")) {
     const name =
       key.split("on")[1][0].toLowerCase() + key.split("on")[1].substring(1);
@@ -181,6 +175,20 @@ export function removeEvent(el: HTMLElement, key: string, oldProps: any): void {
     const name = key.split("@")[1];
     el.removeEventListener(name, oldProps[key]);
   }
+}
+
+export function removeAttribute(
+  el: HTMLElement,
+  key: string,
+  oldProps: any
+): void {
+  if (isXlink(key)) {
+    el.removeAttributeNS(xlinkNS, getXlinkProp(key));
+  } else {
+    el.removeAttribute(key);
+  }
+
+  removeEvent(el, key, oldProps);
 }
 
 export function createNode(tag: string): Element | DocumentFragment | Comment {
