@@ -62,6 +62,27 @@ export function createApp(template: Function): {
 } {
   const app = {
     mount(el: HTMLElement | String) {
+      if (state.isMounted) {
+        console.warn(
+          `[Strve warn]: app is already mounted, cannot mount again.`
+        );
+        return;
+      }
+
+      state._el = normalizeContainer(el);
+      state._template = template;
+      state.isMounted = true;
+
+      if (!state._el) {
+        console.warn(
+          `[Strve warn]: Failed to mount app: mount target selector "${el}" returned null.`
+        );
+        return;
+      }
+
+      state._el.innerHTML = "";
+      const root = mountNode(state._template(), state._el);
+      state.oldTree = root;
       if (normalizeContainer(el)) {
         const tem = template();
         if (getType(tem) === "array") {
