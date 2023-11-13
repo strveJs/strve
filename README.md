@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Strve.js
+# Strve
 
 A JS library that can convert strings into view.
 
