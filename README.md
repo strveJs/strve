@@ -6,7 +6,7 @@
 
 # Strve
 
-A JS library that can convert strings into view.
+The Approachable JavaScript Framework. Strve is a JavaScript library that converts strings into views (user interfaces).
 
 - Easier to get started.
 - Blazing Fast Virtual DOM.
