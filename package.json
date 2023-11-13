@@ -29,12 +29,15 @@
   "keywords": [
     "strve",
     "strvejs",
+    "strve-js",
     "dom",
     "mvvm",
     "virtual dom",
     "html",
     "template",
-    "string"
+    "string",
+    "view",
+    "javascript"
   ],
   "author": "maomincoding",
   "license": "MIT",
