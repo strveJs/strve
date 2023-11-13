@@ -1,7 +1,7 @@
 {
-  "name": "strve-js",
+  "name": "strve",
   "version": "6.0.2",
-  "description": "A JS library that can convert strings into view",
+  "description": "The Approachable JavaScript Framework. Strve is a JavaScript library that converts strings into views (user interfaces).",
   "main": "dist/strve.full.js",
   "module": "dist/strve.runtime-esm.js",
   "unpkg": "dist/strve.full.prod.js",
@@ -39,9 +39,9 @@
   "author": "maomincoding",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/maomincoding/strve/issues"
+    "url": "https://github.com/strveJs/strve/issues"
   },
-  "homepage": "https://github.com/maomincoding/strve#readme",
+  "homepage": "https://github.com/strveJs/strve#readme",
   "devDependencies": {
     "@rollup/plugin-replace": "^5.0.2",
     "rollup": "^2.57.0",
