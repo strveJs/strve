@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="https://github.com/maomincoding/strve" target="_blank" rel="noopener noreferrer">
-    <img width="180" src="https://maomincoding.github.io/strve-doc/logo.png" alt="Strve logo">
+  <a href="https://github.com/strveJs/strve" target="_blank" rel="noopener noreferrer">
+    <img width="180" src="https://strvejs.github.io/strve-doc/logo.png" alt="Strve logo">
   </a>
 </p>
 
