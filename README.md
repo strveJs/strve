@@ -16,6 +16,14 @@ The Approachable JavaScript Framework. Strve is a JavaScript library that conver
 
 To learn more about Strve, check [its documentation](https://strvejs.github.io/strve-doc/).
 
+## ChangeLog
+
+[https://strvejs.github.io/strve-doc/changeLog/](https://strvejs.github.io/strve-doc/changeLog/)
+
+## Usage Trends
+
+https://npm-compare.com/strve-js
+
 ## License
 
 [MIT](http://opensource.org/licenses/MIT)
