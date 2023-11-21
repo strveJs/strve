@@ -1,7 +1,7 @@
 {
   "name": "strve-js",
   "version": "6.0.2",
-  "description": "The Approachable JavaScript Framework. Strve is a JavaScript library that converts strings into views (user interfaces).",
+  "description": "A approachable, fast, flexible and lightweight JavaScript library for building user interfaces.",
   "main": "dist/strve.full.js",
   "module": "dist/strve.runtime-esm.js",
   "unpkg": "dist/strve.full.prod.js",

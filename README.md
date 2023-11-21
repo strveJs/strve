@@ -6,7 +6,7 @@
 
 # Strve
 
-The Approachable JavaScript Framework. Strve is a JavaScript library that converts strings into views (user interfaces).
+A approachable, fast, flexible and lightweight JavaScript library for building user interfaces.
 
 - Easier to get started.
 - Blazing Fast Virtual DOM.
