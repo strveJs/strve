@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.0.2
+ * Strve.js v6.1.0
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -8,722 +8,6 @@
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.Strve = {}));
 })(this, (function (exports) { 'use strict';
-
-    // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-    const HTML_TAGS = "html,body,base,head,link,meta,style,title,address,article,aside,footer," +
-        "header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption," +
-        "figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code," +
-        "data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup," +
-        "time,u,var,wbr,area,audio,map,track,video,embed,object,param,source," +
-        "canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td," +
-        "th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup," +
-        "option,output,progress,select,textarea,details,dialog,menu," +
-        "summary,template,blockquote,iframe,tfoot";
-    // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-    const SVG_TAGS = "svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face" +
-        "foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern," +
-        "polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view," +
-        "feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur," +
-        "feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight," +
-        "linearGradient,stop,radialGradient," +
-        "animateTransform,animateMotion";
-    const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
-    const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
-    function isXlink(name) {
-        return name.charAt(5) === ":" && name.slice(0, 5) === "xlink";
-    }
-    function makeMap(str) {
-        const map = Object.create(null);
-        const list = str.split(",");
-        for (let i = 0; i < list.length; i++) {
-            map[list[i]] = true;
-        }
-        return function (val) {
-            return map[val];
-        };
-    }
-    function isComplexType(v) {
-        const typeData = ["object", "array", "function", "regexp", "date", "math"];
-        return typeData.indexOf(getType(v)) !== -1;
-    }
-    function getType(v) {
-        return Object.prototype.toString
-            .call(v)
-            .match(/\[object (.+?)\]/)[1]
-            .toLowerCase();
-    }
-    function isUndef(v) {
-        return v === undefined || v === null;
-    }
-    function checkSameVnode(o, n) {
-        return o.tag === n.tag && o.key === n.key;
-    }
-    function isVnode(vnodes) {
-        if (vnodes) {
-            return (vnodes.hasOwnProperty("tag") &&
-                vnodes.hasOwnProperty("props") &&
-                vnodes.hasOwnProperty("children") &&
-                vnodes.hasOwnProperty("key") &&
-                vnodes.hasOwnProperty("el"));
-        }
-    }
-    function isArrayVnode(vnodes) {
-        for (let index = 0; index < vnodes.length; index++) {
-            return isVnode(vnodes[index]);
-        }
-    }
-    function checkVnode(vnodes) {
-        if (getType(vnodes) === "array") {
-            return isArrayVnode(vnodes);
-        }
-        else if (getType(vnodes) === "object") {
-            return isVnode(vnodes);
-        }
-    }
-    const isComplexDataType = (obj) => (typeof obj === "object" || typeof obj === "function") && obj !== null;
-    function isSameObject(obj1, obj2) {
-        if (!isComplexDataType(obj1) || !isComplexDataType(obj2)) {
-            return obj1 === obj2;
-        }
-        if (obj1 === obj2) {
-            return true;
-        }
-        const obj1Keys = Object.keys(obj1);
-        const obj2Keys = Object.keys(obj2);
-        if (obj1Keys.length !== obj2Keys.length) {
-            return false;
-        }
-        for (const key in obj1) {
-            const res = isSameObject(obj1[key], obj2[key]);
-            if (!res) {
-                return false;
-            }
-        }
-        return true;
-    }
-    const namespaceMap = {
-        svg: "http://www.w3.org/2000/svg",
-        math: "http://www.w3.org/1998/Math/MathML",
-    };
-    const xlinkNS = "http://www.w3.org/1999/xlink";
-    function getXlinkProp(name) {
-        return isXlink(name) ? name.slice(6, name.length) : "";
-    }
-    function getTagNamespace(tag) {
-        if (isSVG(tag)) {
-            return "svg";
-        }
-        if (tag === "math") {
-            return "math";
-        }
-    }
-    function createElementNS(namespace, tagName) {
-        return document.createElementNS(namespaceMap[namespace], tagName);
-    }
-    function setStyleProp(el, prototype) {
-        for (let i in prototype) {
-            el.style[i] = prototype[i];
-        }
-    }
-    function addEvent(el, props) {
-        for (let index = 0; index < Object.keys(props).length; index++) {
-            const element = Object.keys(props)[index].toString();
-            if (element.startsWith("on")) {
-                const name = element.split("on")[1][0].toLowerCase() +
-                    element.split("on")[1].substring(1);
-                el.addEventListener(name, props[element]);
-            }
-            else if (element.startsWith("@")) {
-                const name = element.split("@")[1];
-                el.addEventListener(name, props[element]);
-            }
-        }
-    }
-    function removeEvent(el, key, oldProps) {
-        if (key.startsWith("on")) {
-            const name = key.split("on")[1][0].toLowerCase() + key.split("on")[1].substring(1);
-            el.removeEventListener(name, oldProps[key]);
-        }
-        else if (key.startsWith("@")) {
-            const name = key.split("@")[1];
-            el.removeEventListener(name, oldProps[key]);
-        }
-    }
-    function removeAttribute(el, key, oldProps) {
-        if (isXlink(key)) {
-            el.removeAttributeNS(xlinkNS, getXlinkProp(key));
-        }
-        else {
-            el.removeAttribute(key);
-        }
-        removeEvent(el, key, oldProps);
-    }
-    function createNode(tag) {
-        // Html
-        if (isHTMLTag(tag)) {
-            return document.createElement(tag);
-        }
-        // Svg
-        else if (isSVG(tag)) {
-            return createElementNS(getTagNamespace(tag), tag);
-        }
-        // Fragment
-        else if (tag === "fragment" || tag === "component") {
-            return document.createDocumentFragment();
-        }
-        // Comment
-        else if (tag === "comment" || tag === "null") {
-            return document.createComment(tag);
-        }
-        // Web-components
-        else if (tag.indexOf("-") !== -1) {
-            return document.createElement(tag);
-        }
-        // Default
-        else {
-            return document.createElement(tag);
-        }
-    }
-
-    const flag = ["$ref", "$name", "$props"];
-    const _com_ = Object.create(null);
-    const _components = new WeakMap();
-    let componentName = "";
-    let mountHook = [];
-    let unMountedHook = [];
-    // domInfo
-    const domInfo = Object.create(null);
-    // propsData
-    let propsData = reactive(Object.create(null));
-    // Responsive object handling
-    function reactive(target = {}) {
-        if (typeof target !== "object" || target === null) {
-            return target;
-        }
-        const proxyConf = {
-            get(target, key, receiver) {
-                const ownKeys = Reflect.ownKeys(target);
-                if (ownKeys.includes(key)) {
-                    const result = Reflect.get(target, key, receiver);
-                    return reactive(result);
-                }
-                else if (typeof key === "symbol") {
-                    // Handle symbol keys
-                    const result = Reflect.get(target, key, receiver);
-                    return reactive(result);
-                }
-            },
-            set(target, key, val, receiver) {
-                if (val === target[key]) {
-                    return true;
-                }
-                const ownKeys = Reflect.ownKeys(target);
-                if (ownKeys.includes(key) || Object.keys(_com_).includes(key)) {
-                    const result = Reflect.set(target, key, val, receiver);
-                    return result;
-                }
-                else if (typeof key === "symbol") {
-                    // Handle symbol keys
-                    const result = Reflect.set(target, key, val, receiver);
-                    return result;
-                }
-            },
-            deleteProperty(target, key) {
-                const result = Reflect.deleteProperty(target, key);
-                return result;
-            },
-        };
-        const observed = new Proxy(target, proxyConf);
-        return observed;
-    }
-    // Update text node
-    function updateTextNode(val, el) {
-        if (isComplexType(val)) {
-            if (getType(val) === "array") {
-                if (val.length > 1) {
-                    let _text = "";
-                    for (let index = 0; index < val.length; index++) {
-                        const c = val[index];
-                        _text += isComplexType(c) ? JSON.stringify(c) : c;
-                    }
-                    el.textContent = _text;
-                }
-                else if (val.length === 0) {
-                    el.textContent = "";
-                }
-                else {
-                    const _text = JSON.stringify(val).replace(/,/g, "");
-                    el.textContent = _text;
-                }
-            }
-            else {
-                el.textContent = JSON.stringify(val);
-            }
-        }
-        else {
-            el.textContent = val.toString();
-        }
-    }
-    // Convert virtual dom to real dom
-    function mount(vnode, container, anchor) {
-        // tag
-        if (!isUndef(vnode.tag)) {
-            const el = createNode(vnode.tag);
-            vnode.el = el;
-            // props
-            if (!isUndef(vnode.props)) {
-                addEvent(el, vnode.props);
-                // domInfo
-                if (vnode.props.hasOwnProperty(flag[0]) &&
-                    getType(vnode.props[flag[0]]) === "string") {
-                    domInfo[vnode.props[flag[0]]] = el;
-                }
-                // components
-                if (vnode.props.hasOwnProperty(flag[1])) {
-                    _com_[vnode.props[flag[1]]] = Object.create(null);
-                    _components.set(_com_[vnode.props[flag[1]]], vnode.children);
-                }
-                // propsData
-                if (vnode.props.hasOwnProperty(flag[1]) &&
-                    vnode.props.hasOwnProperty(flag[2])) {
-                    propsData[vnode.props[flag[1]]] = vnode.props[flag[2]];
-                }
-                // props
-                for (const key in vnode.props) {
-                    if (vnode.props.hasOwnProperty(key)) {
-                        if (getType(vnode.props[key]) !== "function" &&
-                            !vnode.props.hasOwnProperty("key")) {
-                            if (isXlink(key)) {
-                                el.setAttributeNS(xlinkNS, key, vnode.props[key]);
-                            }
-                            else {
-                                if (!flag.includes(key)) {
-                                    el.setAttribute(key, vnode.props[key]);
-                                }
-                            }
-                        }
-                        if (getType(vnode.props[key]) === "object") {
-                            setStyleProp(el, vnode.props[key]);
-                        }
-                    }
-                }
-            }
-            // children
-            if (!isUndef(vnode.children)) {
-                const childNode = vnode.children;
-                if (!checkVnode(childNode)) {
-                    el && updateTextNode(childNode, el);
-                }
-                else {
-                    if (getType(childNode) === "array") {
-                        for (let index = 0; index < childNode.length; index++) {
-                            const child = childNode[index];
-                            if (isVnode(child)) {
-                                mount(child, el);
-                            }
-                        }
-                    }
-                    else if (getType(childNode) === "object") {
-                        mount(childNode, el);
-                    }
-                }
-            }
-            if (anchor) {
-                container.insertBefore(el, anchor);
-            }
-            else if (container) {
-                container.appendChild(el);
-            }
-            else {
-                return el;
-            }
-        }
-    }
-    // diff
-    function patch(oNode, nNode) {
-        if (!checkSameVnode(oNode, nNode)) {
-            const parent = oNode.el.parentNode;
-            const anchor = oNode.el.nextSibling;
-            parent.removeChild(oNode.el);
-            mount(nNode, parent, anchor);
-        }
-        else {
-            const el = (nNode.el = oNode.el);
-            // props
-            const oldProps = oNode.props || {};
-            const newProps = nNode.props || {};
-            for (const key in newProps) {
-                const newValue = newProps[key];
-                const oldValue = oldProps[key];
-                if (newValue !== oldValue) {
-                    if (!isUndef(newValue)) {
-                        if (getType(newValue) !== "function" && key !== "key") {
-                            el[key] && (el[key] = newValue); // property
-                            if (isXlink(key)) {
-                                el.setAttributeNS(xlinkNS, key, newValue);
-                            }
-                            else {
-                                el.setAttribute(key, newValue);
-                            }
-                            if (getType(newValue) === "object") {
-                                setStyleProp(el, newValue);
-                            }
-                        }
-                        else if (getType(newValue) === "function" &&
-                            newValue.toString() !== oldValue.toString()) {
-                            removeEvent(el, key, oldProps);
-                            addEvent(el, newProps);
-                        }
-                    }
-                    else {
-                        removeAttribute(el, key, oldProps);
-                    }
-                }
-            }
-            for (const key in oldProps) {
-                if (!(key in newProps)) {
-                    removeAttribute(el, key, oldProps);
-                }
-            }
-            // children
-            const ocs = oNode.children;
-            const ncs = nNode.children;
-            if (!checkVnode(ocs) && !checkVnode(ncs) && !isSameObject(ocs, ncs)) {
-                el && updateTextNode(ncs, el);
-            }
-            else if (isVnode(ocs) && isVnode(ncs)) {
-                patch(ocs, ncs);
-            }
-            else if (getType(ocs) === "array" && getType(ncs) === "array") {
-                updateChildren(ocs, ncs, el);
-            }
-        }
-    }
-    // Two-ended algorithm
-    function updateChildren(oldCh, newCh, parentElm) {
-        let oldStartIdx = 0;
-        let newStartIdx = 0;
-        let oldEndIdx = oldCh.length - 1;
-        let newEndIdx = newCh.length - 1;
-        let oldStartVnode = oldCh[0];
-        let newStartVnode = newCh[0];
-        let oldEndVnode = oldCh[oldEndIdx];
-        let newEndVnode = newCh[newEndIdx];
-        let keyMap = {};
-        while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
-            if (isUndef(oldStartVnode)) {
-                oldStartVnode = oldCh[++oldStartIdx];
-            }
-            else if (isUndef(oldEndVnode)) {
-                oldEndVnode = oldCh[--oldEndIdx];
-            }
-            else if (checkSameVnode(oldStartVnode, newStartVnode)) {
-                patch(oldStartVnode, newStartVnode);
-                oldStartVnode = oldCh[++oldStartIdx];
-                newStartVnode = newCh[++newStartIdx];
-            }
-            else if (checkSameVnode(oldEndVnode, newEndVnode)) {
-                patch(oldEndVnode, newEndVnode);
-                oldEndVnode = oldCh[--oldEndIdx];
-                newEndVnode = newCh[--newEndIdx];
-            }
-            else if (checkSameVnode(oldStartVnode, newEndVnode)) {
-                parentElm.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling);
-                patch(oldStartVnode, newEndVnode);
-                oldStartVnode = oldCh[++oldStartIdx];
-                newEndVnode = newCh[--newEndIdx];
-            }
-            else if (checkSameVnode(oldEndVnode, newStartVnode)) {
-                parentElm.insertBefore(oldEndVnode.el, oldStartVnode.el);
-                patch(oldEndVnode, newStartVnode);
-                oldEndVnode = oldCh[--oldEndIdx];
-                newStartVnode = newCh[++newStartIdx];
-            }
-            else {
-                if (!keyMap) {
-                    keyMap = {};
-                    for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                        keyMap[oldCh[i].key] = i;
-                    }
-                }
-                const idxInOld = keyMap[newStartVnode.key];
-                if (isUndef(idxInOld)) {
-                    parentElm.insertBefore(mount(newStartVnode), oldStartVnode.el);
-                }
-                else {
-                    const oldVnode = oldCh[idxInOld];
-                    parentElm.insertBefore(oldVnode.el, oldStartVnode.el);
-                    patch(oldVnode, newStartVnode);
-                    oldCh[idxInOld] = undefined;
-                }
-                newStartVnode = newCh[++newStartIdx];
-            }
-        }
-        if (newStartIdx <= newEndIdx) {
-            for (let i = newStartIdx; i <= newEndIdx; i++) {
-                const before = newCh[newEndIdx + 1]?.el || null;
-                parentElm.insertBefore(mount(newCh[i]), before);
-            }
-        }
-        else if (oldStartIdx <= oldEndIdx) {
-            for (let i = oldStartIdx; i <= oldEndIdx; i++) {
-                parentElm.removeChild(oldCh[i].el);
-            }
-        }
-    }
-    // onMounted
-    function onMounted(fn = null) {
-        if (fn === null)
-            return;
-        if (typeof fn !== "function") {
-            console.error(`[Strve warn]: The parameter of onMounted is not a function!`);
-            return;
-        }
-        mountHook.push(fn);
-    }
-    // onUnmounted
-    function onUnmounted(fn = null) {
-        if (fn === null)
-            return;
-        if (typeof fn !== "function") {
-            console.error(`[Strve warn]: The parameter of onUnmounted is not a function!`);
-            return;
-        }
-        unMountedHook.push(fn);
-    }
-    // nextTick
-    const p = getType(Promise) !== "undefined" && Promise.resolve();
-    const nextTick = (fn) => p.then(fn);
-    // Mount node
-    function mountNode(dom, selector, name) {
-        if (!state.isMounted) {
-            mount(dom, selector);
-            state.oldTree = dom;
-            state.isMounted = true;
-            if (mountHook.length > 0) {
-                for (let i = 0, j = mountHook.length; i < j; i++) {
-                    mountHook[i] && mountHook[i]();
-                }
-            }
-            mountHook = [];
-        }
-        else {
-            const newTree = dom;
-            patch(state.oldTree, newTree);
-            state.oldTree = newTree;
-            if (name) {
-                _components.set(_com_[name], dom);
-            }
-        }
-    }
-    // Change data
-    function setData(callback, options) {
-        if (getType(callback) === "function" && getType(Promise) !== "undefined") {
-            return Promise.resolve()
-                .then(() => {
-                callback();
-            })
-                .then(() => {
-                // Router
-                if (options && options.status === "useRouter") {
-                    if (unMountedHook.length > 0) {
-                        for (let i = 0, j = unMountedHook.length; i < j; i++) {
-                            unMountedHook[i] && unMountedHook[i]();
-                        }
-                    }
-                    unMountedHook = [];
-                    state.isMounted = false;
-                    state._el.innerHTML = "";
-                    const tem = state._template();
-                    mountNode(tem, state._el);
-                }
-                // Web Component
-                else if (options && options.name === "useCustomElement") {
-                    const oldTree = _components.get(_com_[options.customElement.id]).template;
-                    const props = _components.get(_com_[options.customElement.id]).props;
-                    const newTree = options.customElement.template(props);
-                    patch(oldTree, newTree);
-                }
-                // component
-                else if (options && typeof options.name === "function") {
-                    const name = options.name.name;
-                    const _component = options.name();
-                    if (componentName !== name) {
-                        componentName = name;
-                        state.oldTree = _components.get(_com_[name]);
-                    }
-                    mountNode(_component, null, name);
-                }
-                else {
-                    mountNode(state._template(), null);
-                }
-            })
-                .catch((err) => console.error(err));
-        }
-    }
-    // Web Component
-    function defineCustomElement(options, tag) {
-        class customElement extends HTMLElement {
-            shadow;
-            props;
-            isComMounted;
-            comOldTree;
-            static get observedAttributes() {
-                if (options.attributeChanged && options.attributeChanged.length > 0) {
-                    return options.attributeChanged;
-                }
-            }
-            constructor() {
-                super();
-                this.shadow = null;
-                this.props = Object.create(null);
-                this.isComMounted = false;
-                this.comOldTree = Object.create(null);
-                if (options.template && options.id) {
-                    const t = document.createElement("template");
-                    t.setAttribute("id", options.id);
-                    const content = t.content.cloneNode(true);
-                    if (options.styles && Array.isArray(options.styles)) {
-                        const s = document.createElement("style");
-                        s.textContent = options.styles.join("");
-                        content.appendChild(s);
-                    }
-                    this.shadow = this.attachShadow({ mode: "open" });
-                    this.shadow.appendChild(content);
-                    if (!options.attributeChanged) {
-                        const tem = options.template();
-                        mount(tem, this.shadow);
-                        _com_[options.id] = Object.create(null);
-                        _components.set(_com_[options.id], {
-                            template: tem,
-                            props: null,
-                        });
-                    }
-                }
-            }
-            // Called when the custom element is first connected to the document DOM.
-            connectedCallback() {
-                const arg = arguments;
-                options.lifetimes &&
-                    typeof options.lifetimes.connectedCallback === "function" &&
-                    options.lifetimes.connectedCallback(arg);
-            }
-            // Called when a custom element is disconnected from the document DOM.
-            disconnectedCallback() {
-                const arg = arguments;
-                options.lifetimes &&
-                    typeof options.lifetimes.disconnectedCallback === "function" &&
-                    options.lifetimes.disconnectedCallback(arg);
-            }
-            // Called when a custom element is moved to a new document.
-            adoptedCallback() {
-                const arg = arguments;
-                options.lifetimes &&
-                    typeof options.lifetimes.adoptedCallback === "function" &&
-                    options.lifetimes.adoptedCallback(arg);
-            }
-            // Called when an attribute of a custom element is added, removed, or changed.
-            attributeChangedCallback() {
-                const arg = arguments;
-                if (options.attributeChanged && options.attributeChanged.length > 0) {
-                    this.props[arg[0]] = arg[2];
-                    const tem = options.template(this.props);
-                    if (!this.isComMounted) {
-                        mount(tem, this.shadow);
-                        _com_[options.id] = Object.create(null);
-                        _components.set(_com_[options.id], {
-                            template: tem,
-                            props: this.props,
-                        });
-                        this.comOldTree = tem;
-                        this.isComMounted = true;
-                    }
-                    else {
-                        patch(this.comOldTree, tem);
-                        _components.set(_com_[options.id], {
-                            template: tem,
-                            props: this.props,
-                        });
-                        this.comOldTree = tem;
-                    }
-                }
-                if (options.immediateProps) {
-                    options.lifetimes &&
-                        typeof options.lifetimes.attributeChangedCallback === "function" &&
-                        options.lifetimes.attributeChangedCallback(arg);
-                }
-            }
-        }
-        if (typeof tag === "string" && tag.indexOf("-") !== -1) {
-            customElements.define(tag, customElement);
-        }
-        else {
-            console.error(`[Strve warn]: [${tag}]>> please name the string with "-" as a custom element. `);
-        }
-    }
-
-    const version = "6.0.2";
-    const state = {
-        _el: null,
-        _template: null,
-        oldTree: null,
-        isMounted: false,
-    };
-    function normalizeContainer(container) {
-        if (typeof container === "string") {
-            const res = document.querySelector(container);
-            if (!res) {
-                let elem = null;
-                if (container.startsWith("#")) {
-                    elem = document.createElement("div");
-                    elem.setAttribute("id", container.substring(1, container.length));
-                }
-                else if (container.startsWith(".")) {
-                    elem = document.createElement("div");
-                    elem.setAttribute("class", container.substring(1, container.length));
-                }
-                else {
-                    console.warn(`[Strve warn]: Failed to mount app: mount target selector "${container}" returned null.`);
-                }
-                document.body.insertAdjacentElement("afterbegin", elem);
-                return elem;
-            }
-            return res;
-        }
-        else if (container instanceof HTMLElement) {
-            return container;
-        }
-        else if (window.ShadowRoot &&
-            container instanceof window.ShadowRoot &&
-            container.mode === "closed") {
-            console.warn(`[Strve warn]: mounting on a ShadowRoot with \`{mode: "closed"}\` may lead to unpredictable bugs.`);
-            return null;
-        }
-        else {
-            return null;
-        }
-    }
-    function createApp(template) {
-        const app = {
-            mount(el) {
-                if (normalizeContainer(el)) {
-                    const tem = template();
-                    if (getType(tem) === "array") {
-                        console.error("[Strve warn]: Please provide a root node.");
-                    }
-                    else {
-                        state._template = template;
-                        state._el = normalizeContainer(el);
-                        state._el && mountNode(tem, state._el);
-                    }
-                }
-                else {
-                    console.error("[Strve warn]: There must be a mount element node.");
-                }
-            },
-        };
-        return app;
-    }
 
     const MODE_SLASH = 0;
     const MODE_TEXT = 1;
@@ -920,14 +204,779 @@
     };
     const html = regular.bind(createVNode);
 
+    // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+    const HTML_TAGS = 'html,body,base,head,link,meta,style,title,address,article,aside,footer,' +
+        'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
+        'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
+        'data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,' +
+        'time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,' +
+        'canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,' +
+        'th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,' +
+        'option,output,progress,select,textarea,details,dialog,menu,' +
+        'summary,template,blockquote,iframe,tfoot';
+    // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
+    const SVG_TAGS = 'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
+        'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
+        'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
+        'feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feFlood,feGaussianBlur,' +
+        'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
+        'linearGradient,stop,radialGradient,' +
+        'animateTransform,animateMotion';
+    function makeMap(str) {
+        const map = Object.create(null);
+        const list = str.split(',');
+        for (let i = 0; i < list.length; i++) {
+            map[list[i]] = true;
+        }
+        return function (val) {
+            return map[val];
+        };
+    }
+    const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
+    const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
+    function isXlink(name) {
+        return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
+    }
+    const namespaceMap = {
+        svg: 'http://www.w3.org/2000/svg',
+        math: 'http://www.w3.org/1998/Math/MathML',
+    };
+    const xlinkNS = 'http://www.w3.org/1999/xlink';
+    function getXlinkProp(name) {
+        return isXlink(name) ? name.slice(6, name.length) : '';
+    }
+    function getTagNamespace(tag) {
+        if (isSVG(tag)) {
+            return 'svg';
+        }
+        if (tag === 'math') {
+            return 'math';
+        }
+        return undefined;
+    }
+    function createElementNS(namespace, tagName) {
+        return document.createElementNS(namespaceMap[namespace], tagName);
+    }
+    function getType(v) {
+        return Object.prototype.toString
+            .call(v)
+            .match(/\[object (.+?)\]/)[1]
+            .toLowerCase();
+    }
+    const typeData = ['object', 'array', 'function', 'regexp', 'date', 'math'];
+    function isComplexType(v) {
+        return typeData.includes(getType(v));
+    }
+    function isUndef(v) {
+        return v === undefined || v === null;
+    }
+    function checkSameVnode(o, n) {
+        return o.tag === n.tag && o.key === n.key;
+    }
+    function hasOwnProperty(obj, prop) {
+        return obj.hasOwnProperty(prop);
+    }
+    function isVnode(vnode) {
+        if (vnode) {
+            return (hasOwnProperty(vnode, 'tag') &&
+                hasOwnProperty(vnode, 'props') &&
+                hasOwnProperty(vnode, 'children') &&
+                hasOwnProperty(vnode, 'key') &&
+                hasOwnProperty(vnode, 'el'));
+        }
+    }
+    function isArrayVnode(vnodes) {
+        return vnodes.every(isVnode);
+    }
+    function checkVnode(vnodes) {
+        return Array.isArray(vnodes) ? isArrayVnode(vnodes) : isVnode(vnodes);
+    }
+    function warn(msg) {
+        console.warn(`[Strve warn]: ${msg}`);
+    }
+    function setStyleProp(el, prototype) {
+        Object.assign(el.style, prototype);
+    }
+    function addEvent(el, props) {
+        for (const [key, value] of Object.entries(props)) {
+            if (key.startsWith('on')) {
+                const name = key.slice(2).toLowerCase();
+                el.addEventListener(name, value);
+            }
+        }
+    }
+    function removeEvent(el, key, oldProps) {
+        if (key.startsWith('on')) {
+            const name = key.slice(2, 3).toLowerCase() + key.slice(3);
+            if (typeof oldProps[key] === 'function') {
+                el.removeEventListener(name, oldProps[key]);
+            }
+        }
+    }
+    function setAttribute(el, key, value) {
+        if (typeof isXlink === 'function' && !isXlink(key)) {
+            el.setAttribute(key, value.toString());
+        }
+        else {
+            const xlinkNS = 'http://www.w3.org/1999/xlink';
+            el.setAttributeNS(xlinkNS, key, value.toString());
+        }
+    }
+    function removeAttribute(el, key) {
+        if (!isXlink(key)) {
+            el.removeAttribute(key);
+        }
+        else {
+            el.removeAttributeNS(xlinkNS, getXlinkProp(key));
+        }
+    }
+    function createNode(tag) {
+        switch (true) {
+            // Html
+            case isHTMLTag(tag):
+                return document.createElement(tag);
+            // Svg
+            case isSVG(tag):
+                return createElementNS(getTagNamespace(tag), tag);
+            // Fragment
+            case tag === 'fragment' || tag === 'component':
+                return document.createDocumentFragment();
+            // Comment
+            case tag === 'comment' || tag === 'null':
+                return document.createComment(tag);
+            // Default
+            default:
+                return document.createElement(tag);
+        }
+    }
+    // https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+    function getSequence(arr) {
+        const p = arr.slice();
+        const result = [0];
+        let i, j, u, v, c;
+        const len = arr.length;
+        for (i = 0; i < len; i++) {
+            const arrI = arr[i];
+            if (arrI !== 0) {
+                j = result[result.length - 1];
+                if (arr[j] < arrI) {
+                    p[i] = j;
+                    result.push(i);
+                    continue;
+                }
+                u = 0;
+                v = result.length - 1;
+                while (u < v) {
+                    c = ((u + v) / 2) | 0;
+                    if (arr[result[c]] < arrI) {
+                        u = c + 1;
+                    }
+                    else {
+                        v = c;
+                    }
+                }
+                if (arrI < arr[result[u]]) {
+                    if (u > 0) {
+                        p[i] = result[u - 1];
+                    }
+                    result[u] = i;
+                }
+            }
+        }
+        u = result.length;
+        v = result[u - 1];
+        while (u-- > 0) {
+            result[u] = v;
+            v = p[v];
+        }
+        return result;
+    }
+
+    // version
+    const version = '6.1.0';
+    // Private Global Data
+    let _el = Object.create(null);
+    let _template = Object.create(null);
+    let _oldTree = Object.create(null);
+    // Flag
+    const flag = ['$ref', '$name', '$define'];
+    // Component
+    const _components = new WeakMap();
+    // domInfo
+    const domInfo = new WeakMap();
+    // registerComponent
+    function registerComponent(name) {
+        const obj = Object.create(null);
+        if (name) {
+            obj.name = name;
+            return obj;
+        }
+        return obj;
+    }
+    // Update text node
+    function updateTextNode(val, el) {
+        let _text = '';
+        if (Array.isArray(val)) {
+            if (val.length > 1) {
+                let _texts = [];
+                for (let index = 0; index < val.length; index++) {
+                    const c = val[index];
+                    _texts.push(isComplexType(c) ? JSON.stringify(c) : c);
+                }
+                _text = _texts.join('');
+            }
+            else if (val.length === 0) {
+                _text = '';
+            }
+            else {
+                _text = JSON.stringify(val).replace(/,/g, '');
+            }
+        }
+        else if (isComplexType(val)) {
+            _text = JSON.stringify(val);
+        }
+        else {
+            _text = val;
+        }
+        el.textContent = _text;
+    }
+    // Convert virtual dom to real dom
+    function mount(vnode, container, anchor) {
+        const { tag, props, children } = vnode;
+        // tag
+        if (!isUndef(tag)) {
+            const el = createNode(tag);
+            vnode.el = el;
+            // props
+            if (!isUndef(props)) {
+                addEvent(el, props);
+                const keys = Object.keys(props);
+                for (let index = 0; index < keys.length; index++) {
+                    const key = keys[index];
+                    const propValue = props[key];
+                    const propValueType = getType(propValue);
+                    if (propValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
+                        setAttribute(el, key, propValue);
+                    }
+                    if (key === 'style' && propValueType === 'object') {
+                        setStyleProp(el, propValue);
+                    }
+                    // domInfo
+                    if (key === flag[0] && propValueType === 'object') {
+                        domInfo.set(propValue, el);
+                    }
+                    // components
+                    if (key === flag[1] && propValueType === 'object') {
+                        _components.set(propValue, children);
+                    }
+                    // Web Component
+                    if (key === flag[2] && propValueType === 'array') {
+                        const [comName, options] = propValue;
+                        if (!customElements.get(comName.name)) {
+                            defineCustomElement(propValue);
+                        }
+                        else {
+                            const tem = options.template();
+                            _components.set(comName, {
+                                template: tem,
+                                props: null,
+                            });
+                        }
+                    }
+                }
+            }
+            // children
+            if (!isUndef(children)) {
+                if (!checkVnode(children)) {
+                    if (el) {
+                        updateTextNode(children, el);
+                    }
+                }
+                else {
+                    const childrenType = getType(children);
+                    if (childrenType === 'array') {
+                        for (let index = 0; index < children.length; index++) {
+                            const child = children[index];
+                            if (isVnode(child)) {
+                                mount(child, el);
+                            }
+                        }
+                    }
+                    else if (childrenType === 'object') {
+                        mount(children, el);
+                    }
+                }
+            }
+            if (anchor) {
+                container.insertBefore(el, anchor);
+            }
+            else if (container) {
+                container.appendChild(el);
+            }
+            else {
+                return el;
+            }
+        }
+    }
+    // diff
+    function patch(oNode, nNode) {
+        if (!checkSameVnode(oNode, nNode)) {
+            const parent = oNode.el.parentNode;
+            const anchor = oNode.el.nextSibling;
+            parent.removeChild(oNode.el);
+            mount(nNode, parent, anchor);
+        }
+        else {
+            const el = (nNode.el = oNode.el);
+            // props
+            const oldProps = oNode.props || {};
+            const newProps = nNode.props || {};
+            const newKeys = Object.keys(newProps);
+            const oldKeys = Object.keys(oldProps);
+            for (let index = 0; index < newKeys.length; index++) {
+                const key = newKeys[index];
+                const newValue = newProps[key];
+                const oldValue = oldProps[key];
+                const newPropValueType = getType(newValue);
+                if (newValue !== oldValue) {
+                    if (!isUndef(newValue)) {
+                        if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
+                            setAttribute(el, key, newValue);
+                        }
+                        if (key === 'style' && newPropValueType === 'object') {
+                            setStyleProp(el, newValue);
+                        }
+                        if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
+                            removeEvent(el, key, oldProps);
+                            addEvent(el, newProps);
+                        }
+                    }
+                    else {
+                        removeAttribute(el, key);
+                    }
+                }
+            }
+            for (let index = 0; index < oldKeys.length; index++) {
+                const key = oldKeys[index];
+                if (!newKeys.includes(key)) {
+                    removeAttribute(el, key);
+                }
+            }
+            // children
+            const oc = oNode.children;
+            const nc = nNode.children;
+            if (getType(oc) === 'array' && getType(nc) === 'array') {
+                patchKeyChildren(oc, nc, el);
+            }
+            else if (isVnode(oc) && isVnode(nc)) {
+                patch(oc, nc);
+            }
+            else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
+                updateTextNode(nc, el);
+            }
+        }
+    }
+    // can be all-keyed or mixed
+    function patchKeyChildren(n1, n2, parentElm) {
+        const l2 = n2.length;
+        let i = 0;
+        let e1 = n1.length - 1;
+        let e2 = l2 - 1;
+        while (i <= e1 && i <= e2) {
+            if (checkSameVnode(n1[i], n2[i])) {
+                patch(n1[i], n2[i]);
+            }
+            else {
+                break;
+            }
+            i++;
+        }
+        while (i <= e1 && i <= e2) {
+            if (checkSameVnode(n1[e1], n2[e2])) {
+                patch(n1[e1], n2[e2]);
+            }
+            else {
+                break;
+            }
+            e1--;
+            e2--;
+        }
+        if (i > e1) {
+            if (i <= e2) {
+                const nextPos = e2 + 1;
+                const anchor = nextPos < l2 ? n2[nextPos].el : null;
+                while (i <= e2) {
+                    parentElm.insertBefore(mount(n2[i]), anchor);
+                    i++;
+                }
+            }
+        }
+        else if (i > e2) {
+            while (i <= e1) {
+                parentElm.removeChild(n1[i].el);
+                i++;
+            }
+        }
+        else {
+            const s1 = i;
+            const s2 = i;
+            const keyToNewIndexMap = new Map();
+            for (i = s2; i <= e2; i++) {
+                const nextChild = n2[i];
+                if (nextChild.key != null) {
+                    keyToNewIndexMap.set(nextChild.key, i);
+                }
+            }
+            let j;
+            let patched = 0;
+            const toBePatched = e2 - s2 + 1;
+            let moved = false;
+            let maxIndexSoFar = 0;
+            const newIndexToOldIndexMap = new Array(toBePatched);
+            for (i = 0; i < toBePatched; i++)
+                newIndexToOldIndexMap[i] = 0;
+            for (let i = s1; i <= e1; i++) {
+                if (patched >= toBePatched) {
+                    parentElm.removeChild(n1[i].el);
+                    continue;
+                }
+                let newIndex;
+                if (n1[i].key !== null) {
+                    newIndex = keyToNewIndexMap.get(n1[i].key);
+                }
+                else {
+                    for (j = s2; j <= e2; j++) {
+                        if (newIndexToOldIndexMap[j - s2] === 0 && checkSameVnode(n1[i], n2[j])) {
+                            newIndex = j;
+                            break;
+                        }
+                    }
+                }
+                if (newIndex === undefined) {
+                    parentElm.removeChild(n1[i].el);
+                }
+                else {
+                    newIndexToOldIndexMap[newIndex - s2] = i + 1;
+                    if (newIndex > maxIndexSoFar) {
+                        maxIndexSoFar = newIndex;
+                    }
+                    else {
+                        moved = true;
+                    }
+                    patch(n1[i], n2[newIndex]);
+                    patched++;
+                }
+            }
+            const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+            j = increasingNewIndexSequence.length - 1;
+            for (let i = toBePatched - 1; i >= 0; i--) {
+                const nextIndex = i + s2;
+                const anchor = nextIndex + 1 < l2 ? n2[nextIndex + 1].el : null;
+                if (newIndexToOldIndexMap[i] === 0) {
+                    parentElm.insertBefore(mount(n2[nextIndex]), anchor);
+                }
+                else if (moved) {
+                    if (j < 0 || i !== increasingNewIndexSequence[j]) {
+                        parentElm.insertBefore(n2[nextIndex].el, anchor);
+                    }
+                    else {
+                        j--;
+                    }
+                }
+            }
+        }
+    }
+    // Web Component
+    function defineCustomElement(option) {
+        const [comName, options] = option;
+        class customElement extends HTMLElement {
+            shadow;
+            props;
+            isComMounted;
+            comOldTree;
+            static get observedAttributes() {
+                if (options.attributeChanged && options.attributeChanged.length > 0) {
+                    return options.attributeChanged;
+                }
+            }
+            constructor() {
+                super();
+                this.shadow = null;
+                this.props = Object.create(null);
+                this.isComMounted = false;
+                this.comOldTree = Object.create(null);
+                if (options.template && comName.name) {
+                    const t = document.createElement('template');
+                    t.setAttribute('id', comName.name);
+                    const content = t.content.cloneNode(true);
+                    if (options.styles && Array.isArray(options.styles)) {
+                        const s = document.createElement('style');
+                        s.textContent = options.styles.join('');
+                        content.appendChild(s);
+                    }
+                    this.shadow = this.attachShadow({ mode: 'open' });
+                    this.shadow.appendChild(content);
+                    if (!options.attributeChanged) {
+                        const tem = options.template();
+                        mount(tem, this.shadow);
+                        _components.set(comName, {
+                            template: tem,
+                            props: null,
+                        });
+                    }
+                }
+            }
+            // Called when the custom element is first connected to the document DOM.
+            connectedCallback() {
+                const arg = arguments;
+                options.lifetimes &&
+                    typeof options.lifetimes.connectedCallback === 'function' &&
+                    options.lifetimes.connectedCallback(arg);
+            }
+            // Called when a custom element is disconnected from the document DOM.
+            disconnectedCallback() {
+                const arg = arguments;
+                options.lifetimes &&
+                    typeof options.lifetimes.disconnectedCallback === 'function' &&
+                    options.lifetimes.disconnectedCallback(arg);
+            }
+            // Called when a custom element is moved to a new document.
+            adoptedCallback() {
+                const arg = arguments;
+                options.lifetimes &&
+                    typeof options.lifetimes.adoptedCallback === 'function' &&
+                    options.lifetimes.adoptedCallback(arg);
+            }
+            // Called when an attribute of a custom element is added, removed, or changed.
+            attributeChangedCallback() {
+                const arg = arguments;
+                if (options.attributeChanged && options.attributeChanged.length > 0) {
+                    this.props[arg[0]] = arg[2];
+                    const tem = options.template(this.props);
+                    if (!this.isComMounted) {
+                        mount(tem, this.shadow);
+                        _components.set(comName, {
+                            template: tem,
+                            props: this.props,
+                        });
+                        this.comOldTree = tem;
+                        this.isComMounted = true;
+                    }
+                    else {
+                        patch(this.comOldTree, tem);
+                        _components.set(comName, {
+                            template: tem,
+                            props: this.props,
+                        });
+                        this.comOldTree = tem;
+                    }
+                }
+                if (options.immediateProps) {
+                    options.lifetimes &&
+                        typeof options.lifetimes.attributeChangedCallback === 'function' &&
+                        options.lifetimes.attributeChangedCallback(arg);
+                }
+            }
+        }
+        if (comName.name.indexOf('-') !== -1) {
+            customElements.define(comName.name, customElement);
+        }
+        else {
+            warn(`[${comName.name}]>> please name the string with "-" as a custom element.`);
+        }
+    }
+    // onMounted
+    let mountHook = [];
+    function onMounted(fn = null) {
+        if (fn === null)
+            return;
+        if (typeof fn !== 'function') {
+            console.warn('The parameter of onMounted is not a function!');
+            return;
+        }
+        mountHook.push(fn);
+    }
+    // onUnmounted
+    let unMountedHook = [];
+    function onUnmounted(fn = null) {
+        if (fn === null)
+            return;
+        if (typeof fn !== 'function') {
+            console.warn('The parameter of onUnmounted is not a function!');
+            return;
+        }
+        unMountedHook.push(fn);
+    }
+    const p = getType(Promise) !== 'undefined' && Promise.resolve();
+    // nextTick
+    const nextTick = (fn) => p.then(fn);
+    // Mount node
+    let _isMounted = false;
+    function mountNode(dom, selector) {
+        if (!_isMounted) {
+            mount(dom, selector);
+            _oldTree = dom;
+            _isMounted = true;
+            if (mountHook.length > 0) {
+                for (let i = 0, j = mountHook.length; i < j; i++) {
+                    mountHook[i] && mountHook[i]();
+                }
+            }
+            mountHook = [];
+        }
+        else {
+            const newTree = dom;
+            patch(_oldTree, newTree);
+            _oldTree = newTree;
+        }
+    }
+    // Change data
+    function setData(callback, options) {
+        if (typeof callback === 'function' && typeof Promise !== 'undefined') {
+            return Promise.resolve()
+                .then(() => {
+                callback();
+            })
+                .then(() => {
+                if (!options) {
+                    const tem = _template();
+                    mountNode(tem, null);
+                }
+                else {
+                    const optionsType = getType(options);
+                    // Component
+                    if (optionsType === 'array' && typeof options[1] === 'function') {
+                        const [name, comFn] = options;
+                        const newTree = comFn();
+                        const oldTree = _components.get(name);
+                        patch(oldTree, newTree);
+                        _components.set(name, newTree);
+                    }
+                    // Web Component
+                    else if (optionsType === 'array' && typeof options[1] === 'object') {
+                        const [name, comObj] = options;
+                        const { template, props } = _components.get(name);
+                        const newTree = comObj.template(props);
+                        patch(template, newTree);
+                        _components.set(name, newTree);
+                    }
+                    // Router
+                    else if (optionsType === 'string' && options === 'useRouter') {
+                        if (unMountedHook.length > 0) {
+                            for (let i = 0, j = unMountedHook.length; i < j; i++) {
+                                unMountedHook[i] && unMountedHook[i]();
+                            }
+                        }
+                        unMountedHook = [];
+                        _isMounted = false;
+                        _el.innerHTML = '';
+                        const tem = _template();
+                        mountNode(tem, _el);
+                    }
+                }
+            })
+                .catch((err) => warn(err));
+        }
+    }
+    function normalizeContainer(container) {
+        if (typeof container === 'string') {
+            const res = document.querySelector(container);
+            if (!res) {
+                let elem = null;
+                if (container.startsWith('#')) {
+                    elem = document.createElement('div');
+                    elem.setAttribute('id', container.substring(1, container.length));
+                }
+                else if (container.startsWith('.')) {
+                    elem = document.createElement('div');
+                    elem.setAttribute('class', container.substring(1, container.length));
+                }
+                else {
+                    warn(`Failed to mount app: mount target selector "${container}" returned null.`);
+                }
+                document.body.insertAdjacentElement('afterbegin', elem);
+                return elem;
+            }
+            return res;
+        }
+        else if (container instanceof HTMLElement) {
+            return container;
+        }
+        else if (window.ShadowRoot &&
+            container instanceof window.ShadowRoot &&
+            container.mode === 'closed') {
+            warn('mounting on a ShadowRoot with `{mode: "closed"}` may lead to unpredictable bugs.');
+            return null;
+        }
+        else {
+            return null;
+        }
+    }
+    function createApp(template) {
+        const app = {
+            mount(el) {
+                const mountNodeEl = normalizeContainer(el);
+                if (mountNodeEl) {
+                    const tem = template();
+                    const temType = getType(tem) === 'array';
+                    if (temType) {
+                        warn('Please provide a root node.');
+                    }
+                    else {
+                        _template = template;
+                        _el = mountNodeEl;
+                        mountNode(tem, _el);
+                    }
+                }
+                else {
+                    warn('There must be a mount element node.');
+                }
+            },
+        };
+        return app;
+    }
+
+    // It is a flexible and powerful JavaScript state management library.
+    class createStateFlow {
+        _mutations;
+        _actions;
+        _state;
+        constructor(options) {
+            this._mutations = options.mutations;
+            this._actions = options.actions;
+            this._state = new Proxy(options.state, {
+                set: (target, key, value) => {
+                    if (this._mutations[key]) {
+                        this._mutations[key](target, value);
+                    }
+                    target[key] = value;
+                    return true;
+                },
+            });
+        }
+        commit(mutationName, payload) {
+            if (this._mutations[mutationName]) {
+                this._mutations[mutationName](this._state, payload);
+            }
+        }
+        async dispatch(actionName, payload) {
+            if (this._actions[actionName]) {
+                await this._actions[actionName](this, payload);
+            }
+        }
+        get state() {
+            return this._state;
+        }
+    }
+
     exports.createApp = createApp;
-    exports.defineCustomElement = defineCustomElement;
+    exports.createStateFlow = createStateFlow;
     exports.domInfo = domInfo;
     exports.html = html;
     exports.nextTick = nextTick;
     exports.onMounted = onMounted;
     exports.onUnmounted = onUnmounted;
-    exports.propsData = propsData;
+    exports.registerComponent = registerComponent;
     exports.setData = setData;
     exports.version = version;
 

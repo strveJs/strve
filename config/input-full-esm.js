@@ -1,11 +1,12 @@
-export { createApp, version } from '../lib/init.js';
 export { html } from '../lib/compile.js';
 export {
-	setData,
-	onMounted,
-	onUnmounted,
-	nextTick,
-	domInfo,
-	propsData,
-	defineCustomElement,
-} from '../lib/diff.js';
+  createApp,
+  domInfo,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  setData,
+  version,
+  registerComponent,
+} from '../lib/core.js';
+export { createStateFlow } from '../lib/stateFlow.js';

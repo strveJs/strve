@@ -1,6 +1,6 @@
 {
   "name": "strve-js",
-  "version": "6.0.2",
+  "version": "6.1.0",
   "description": "A approachable, fast, flexible and lightweight JavaScript library for building user interfaces.",
   "main": "dist/strve.full.js",
   "module": "dist/strve.runtime-esm.js",
@@ -47,8 +47,8 @@
   "homepage": "https://github.com/strveJs/strve#readme",
   "devDependencies": {
     "@rollup/plugin-replace": "^5.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
     "rollup": "^2.57.0",
-    "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.6.3"
   }
 }

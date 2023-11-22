@@ -1,3 +1,3 @@
-export { createApp, version } from './init';
 export { html } from './compile';
-export { setData, onMounted, onUnmounted, nextTick, domInfo, propsData, defineCustomElement, } from './diff';
+export { createApp, domInfo, nextTick, onMounted, onUnmounted, setData, version, registerComponent, } from './core';
+export { createStateFlow } from './stateFlow';
