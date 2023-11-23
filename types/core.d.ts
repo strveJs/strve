@@ -2,7 +2,7 @@ import { vnodeType } from './utils';
 declare const version: string;
 declare const domInfo: WeakMap<object, any>;
 declare function registerComponent(name: string): {
-    name?: string;
+    name: string;
 };
 declare function onMounted(fn?: (() => void) | null): void;
 declare function onUnmounted(fn?: (() => void) | null): void;

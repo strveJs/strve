@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.1.0
+ * Strve.js v6.2.0
  * (c) 2021-2023 maomincoding
  * Released under the MIT License.
  */
@@ -387,15 +387,15 @@ function getSequence(arr) {
 }
 
 // version
-const version = '6.1.0';
+const version = '6.2.0';
 // Private Global Data
 let _el = Object.create(null);
 let _template = Object.create(null);
 let _oldTree = Object.create(null);
 // Flag
-const flag = ['$ref', '$name', '$define'];
+const flag = ['$ref', '$name'];
 // Component
-const _components = new WeakMap();
+const _components = new Map();
 // domInfo
 const domInfo = new WeakMap();
 // registerComponent
@@ -405,7 +405,9 @@ function registerComponent(name) {
         obj.name = name;
         return obj;
     }
-    return obj;
+    else {
+        warn('Please enter the component name.');
+    }
 }
 // Update text node
 function updateTextNode(val, el) {
@@ -459,23 +461,9 @@ function mount(vnode, container, anchor) {
                 if (key === flag[0] && propValueType === 'object') {
                     domInfo.set(propValue, el);
                 }
-                // components
-                if (key === flag[1] && propValueType === 'object') {
-                    _components.set(propValue, children);
-                }
-                // Web Component
-                if (key === flag[2] && propValueType === 'array') {
-                    const [comName, options] = propValue;
-                    if (!customElements.get(comName.name)) {
-                        defineCustomElement(propValue);
-                    }
-                    else {
-                        const tem = options.template();
-                        _components.set(comName, {
-                            template: tem,
-                            props: null,
-                        });
-                    }
+                // Component
+                if (key === flag[1] && (propValueType === 'object' || propValueType === 'array')) {
+                    _components.set(JSON.stringify(propValue), children);
                 }
             }
         }
@@ -514,59 +502,61 @@ function mount(vnode, container, anchor) {
 }
 // diff
 function patch(oNode, nNode) {
-    if (!checkSameVnode(oNode, nNode)) {
-        const parent = oNode.el.parentNode;
-        const anchor = oNode.el.nextSibling;
-        parent.removeChild(oNode.el);
-        mount(nNode, parent, anchor);
-    }
-    else {
-        const el = (nNode.el = oNode.el);
-        // props
-        const oldProps = oNode.props || {};
-        const newProps = nNode.props || {};
-        const newKeys = Object.keys(newProps);
-        const oldKeys = Object.keys(oldProps);
-        for (let index = 0; index < newKeys.length; index++) {
-            const key = newKeys[index];
-            const newValue = newProps[key];
-            const oldValue = oldProps[key];
-            const newPropValueType = getType(newValue);
-            if (newValue !== oldValue) {
-                if (!isUndef(newValue)) {
-                    if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
-                        setAttribute(el, key, newValue);
+    if (oNode.tag !== 'component' && nNode.tag !== 'component') {
+        if (!checkSameVnode(oNode, nNode)) {
+            const parent = oNode.el.parentNode;
+            const anchor = oNode.el.nextSibling;
+            parent.removeChild(oNode.el);
+            mount(nNode, parent, anchor);
+        }
+        else {
+            const el = (nNode.el = oNode.el);
+            // props
+            const oldProps = oNode.props || {};
+            const newProps = nNode.props || {};
+            const newKeys = Object.keys(newProps);
+            const oldKeys = Object.keys(oldProps);
+            for (let index = 0; index < newKeys.length; index++) {
+                const key = newKeys[index];
+                const newValue = newProps[key];
+                const oldValue = oldProps[key];
+                const newPropValueType = getType(newValue);
+                if (newValue !== oldValue) {
+                    if (!isUndef(newValue)) {
+                        if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
+                            setAttribute(el, key, newValue);
+                        }
+                        if (key === 'style' && newPropValueType === 'object') {
+                            setStyleProp(el, newValue);
+                        }
+                        if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
+                            removeEvent(el, key, oldProps);
+                            addEvent(el, newProps);
+                        }
                     }
-                    if (key === 'style' && newPropValueType === 'object') {
-                        setStyleProp(el, newValue);
-                    }
-                    if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
-                        removeEvent(el, key, oldProps);
-                        addEvent(el, newProps);
+                    else {
+                        removeAttribute(el, key);
                     }
                 }
-                else {
+            }
+            for (let index = 0; index < oldKeys.length; index++) {
+                const key = oldKeys[index];
+                if (!newKeys.includes(key)) {
                     removeAttribute(el, key);
                 }
             }
-        }
-        for (let index = 0; index < oldKeys.length; index++) {
-            const key = oldKeys[index];
-            if (!newKeys.includes(key)) {
-                removeAttribute(el, key);
+            // children
+            const oc = oNode.children;
+            const nc = nNode.children;
+            if (getType(oc) === 'array' && getType(nc) === 'array') {
+                patchKeyChildren(oc, nc, el);
             }
-        }
-        // children
-        const oc = oNode.children;
-        const nc = nNode.children;
-        if (getType(oc) === 'array' && getType(nc) === 'array') {
-            patchKeyChildren(oc, nc, el);
-        }
-        else if (isVnode(oc) && isVnode(nc)) {
-            patch(oc, nc);
-        }
-        else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
-            updateTextNode(nc, el);
+            else if (isVnode(oc) && isVnode(nc)) {
+                patch(oc, nc);
+            }
+            else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
+                updateTextNode(nc, el);
+            }
         }
     }
 }
@@ -680,105 +670,6 @@ function patchKeyChildren(n1, n2, parentElm) {
         }
     }
 }
-// Web Component
-function defineCustomElement(option) {
-    const [comName, options] = option;
-    class customElement extends HTMLElement {
-        shadow;
-        props;
-        isComMounted;
-        comOldTree;
-        static get observedAttributes() {
-            if (options.attributeChanged && options.attributeChanged.length > 0) {
-                return options.attributeChanged;
-            }
-        }
-        constructor() {
-            super();
-            this.shadow = null;
-            this.props = Object.create(null);
-            this.isComMounted = false;
-            this.comOldTree = Object.create(null);
-            if (options.template && comName.name) {
-                const t = document.createElement('template');
-                t.setAttribute('id', comName.name);
-                const content = t.content.cloneNode(true);
-                if (options.styles && Array.isArray(options.styles)) {
-                    const s = document.createElement('style');
-                    s.textContent = options.styles.join('');
-                    content.appendChild(s);
-                }
-                this.shadow = this.attachShadow({ mode: 'open' });
-                this.shadow.appendChild(content);
-                if (!options.attributeChanged) {
-                    const tem = options.template();
-                    mount(tem, this.shadow);
-                    _components.set(comName, {
-                        template: tem,
-                        props: null,
-                    });
-                }
-            }
-        }
-        // Called when the custom element is first connected to the document DOM.
-        connectedCallback() {
-            const arg = arguments;
-            options.lifetimes &&
-                typeof options.lifetimes.connectedCallback === 'function' &&
-                options.lifetimes.connectedCallback(arg);
-        }
-        // Called when a custom element is disconnected from the document DOM.
-        disconnectedCallback() {
-            const arg = arguments;
-            options.lifetimes &&
-                typeof options.lifetimes.disconnectedCallback === 'function' &&
-                options.lifetimes.disconnectedCallback(arg);
-        }
-        // Called when a custom element is moved to a new document.
-        adoptedCallback() {
-            const arg = arguments;
-            options.lifetimes &&
-                typeof options.lifetimes.adoptedCallback === 'function' &&
-                options.lifetimes.adoptedCallback(arg);
-        }
-        // Called when an attribute of a custom element is added, removed, or changed.
-        attributeChangedCallback() {
-            const arg = arguments;
-            if (options.attributeChanged && options.attributeChanged.length > 0) {
-                this.props[arg[0]] = arg[2];
-                const tem = options.template(this.props);
-                if (!this.isComMounted) {
-                    mount(tem, this.shadow);
-                    _components.set(comName, {
-                        template: tem,
-                        props: this.props,
-                    });
-                    this.comOldTree = tem;
-                    this.isComMounted = true;
-                }
-                else {
-                    patch(this.comOldTree, tem);
-                    _components.set(comName, {
-                        template: tem,
-                        props: this.props,
-                    });
-                    this.comOldTree = tem;
-                }
-            }
-            if (options.immediateProps) {
-                options.lifetimes &&
-                    typeof options.lifetimes.attributeChangedCallback === 'function' &&
-                    options.lifetimes.attributeChangedCallback(arg);
-            }
-        }
-    }
-    if (comName.name.indexOf('-') !== -1) {
-        customElements.define(comName.name, customElement);
-    }
-    else {
-        warn(`[${comName.name}]>> please name the string with "-" as a custom element.`);
-    }
-}
 // onMounted
 let mountHook = [];
 function onMounted(fn = null) {
@@ -805,24 +696,15 @@ const p = getType(Promise) !== 'undefined' && Promise.resolve();
 // nextTick
 const nextTick = (fn) => p.then(fn);
 // Mount node
-let _isMounted = false;
 function mountNode(dom, selector) {
-    if (!_isMounted) {
-        mount(dom, selector);
-        _oldTree = dom;
-        _isMounted = true;
-        if (mountHook.length > 0) {
-            for (let i = 0, j = mountHook.length; i < j; i++) {
-                mountHook[i] && mountHook[i]();
-            }
+    mount(dom, selector);
+    _oldTree = dom;
+    if (mountHook.length > 0) {
+        for (let i = 0, j = mountHook.length; i < j; i++) {
+            mountHook[i] && mountHook[i]();
         }
-        mountHook = [];
     }
-    else {
-        const newTree = dom;
-        patch(_oldTree, newTree);
-        _oldTree = newTree;
-    }
+    mountHook = [];
 }
 // Change data
 function setData(callback, options) {
@@ -833,8 +715,9 @@ function setData(callback, options) {
         })
             .then(() => {
             if (!options) {
-                const tem = _template();
-                mountNode(tem, null);
+                const newTree = _template();
+                patch(_oldTree, newTree);
+                _oldTree = newTree;
             }
             else {
                 const optionsType = getType(options);
@@ -842,17 +725,9 @@ function setData(callback, options) {
                 if (optionsType === 'array' && typeof options[1] === 'function') {
                     const [name, comFn] = options;
                     const newTree = comFn();
-                    const oldTree = _components.get(name);
+                    const oldTree = _components.get(JSON.stringify(name));
                     patch(oldTree, newTree);
-                    _components.set(name, newTree);
-                }
-                // Web Component
-                else if (optionsType === 'array' && typeof options[1] === 'object') {
-                    const [name, comObj] = options;
-                    const { template, props } = _components.get(name);
-                    const newTree = comObj.template(props);
-                    patch(template, newTree);
-                    _components.set(name, newTree);
+                    _components.set(JSON.stringify(name), newTree);
                 }
                 // Router
                 else if (optionsType === 'string' && options === 'useRouter') {
@@ -862,7 +737,6 @@ function setData(callback, options) {
                         }
                     }
                     unMountedHook = [];
-                    _isMounted = false;
                     _el.innerHTML = '';
                     const tem = _template();
                     mountNode(tem, _el);
