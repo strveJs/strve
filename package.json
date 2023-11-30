@@ -1,6 +1,6 @@
 {
   "name": "strve-js",
-  "version": "6.2.0",
+  "version": "6.2.2",
   "description": "A approachable, fast, flexible and lightweight JavaScript library for building user interfaces.",
   "main": "dist/strve.full.js",
   "module": "dist/strve.runtime-esm.js",

@@ -96,6 +96,10 @@ function checkSameVnode(o: vnodeType, n: vnodeType): boolean {
   return o.tag === n.tag && o.key === n.key;
 }
 
+function notTagComponent(oNode: vnodeType, nNode: vnodeType): boolean {
+  return nNode.tag !== 'component' && oNode.tag !== 'component';
+}
+
 function hasOwnProperty(obj: vnodeType, prop: string) {
   return obj.hasOwnProperty(prop);
 }
@@ -239,4 +243,5 @@ export {
   createNode,
   warn,
   getSequence,
+  notTagComponent,
 };

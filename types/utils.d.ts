@@ -9,6 +9,7 @@ export interface vnodeType {
     key: any;
 }
 declare function checkSameVnode(o: vnodeType, n: vnodeType): boolean;
+declare function notTagComponent(oNode: vnodeType, nNode: vnodeType): boolean;
 declare function isVnode(vnode: vnodeType): boolean;
 declare function checkVnode(vnodes: Array<vnodeType> | vnodeType): boolean;
 declare function warn(msg: string): void;
@@ -25,4 +26,4 @@ declare function setAttribute(el: HTMLElement, key: string, value: string | bool
 declare function removeAttribute(el: HTMLElement, key: string): void;
 declare function createNode(tag: string): Element | DocumentFragment | Comment | null;
 declare function getSequence(arr: number[]): number[];
-export { getType, isComplexType, isUndef, checkSameVnode, isVnode, checkVnode, setStyleProp, addEvent, removeEvent, setAttribute, removeAttribute, createNode, warn, getSequence, };
+export { getType, isComplexType, isUndef, checkSameVnode, isVnode, checkVnode, setStyleProp, addEvent, removeEvent, setAttribute, removeAttribute, createNode, warn, getSequence, notTagComponent, };

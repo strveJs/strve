@@ -14,6 +14,7 @@ import {
   warn,
   getSequence,
   vnodeType,
+  notTagComponent,
 } from './utils';
 
 // version
@@ -25,7 +26,7 @@ let _template: () => vnodeType | null = Object.create(null);
 let _oldTree: vnodeType | null = Object.create(null);
 
 // Flag
-const flag: Array<string> = ['$ref', '$name'];
+const flag = ['$ref', '$id', '$render'];
 
 // Component
 const _components: Map<any, any> = new Map();
@@ -34,14 +35,9 @@ const _components: Map<any, any> = new Map();
 const domInfo: WeakMap<object, any> = new WeakMap();
 
 // registerComponent
-function registerComponent(name: string): { name: string } {
-  const obj = Object.create(null);
-  if (name) {
-    obj.name = name;
-    return obj;
-  } else {
-    warn('Please enter the component name.');
-  }
+function registerComponent(): string {
+  const marker = `strve-${String(Math.random()).slice(2)}`;
+  return marker;
 }
 
 // Update text node
@@ -102,30 +98,37 @@ function mount(
           domInfo.set(propValue, el);
         }
 
-        // Component
-        if (key === flag[1] && (propValueType === 'object' || propValueType === 'array')) {
-          _components.set(JSON.stringify(propValue), children);
+        // Component ID
+        if (key === flag[1] && propValueType === 'string') {
+          _components.set(propValue, children);
+        }
+
+        // Component Render
+        if (key === flag[2] && propValueType === 'function') {
+          mount(propValue()(), el);
         }
       }
     }
 
     // children
-    if (!isUndef(children)) {
-      if (!checkVnode(children)) {
-        if (el) {
-          updateTextNode(children, el);
-        }
-      } else {
-        const childrenType = getType(children);
-        if (childrenType === 'array') {
-          for (let index = 0; index < children.length; index++) {
-            const child = children[index];
-            if (isVnode(child)) {
-              mount(child, el);
-            }
+    if (tag !== 'component') {
+      if (!isUndef(children)) {
+        if (!checkVnode(children)) {
+          if (el) {
+            updateTextNode(children, el);
           }
-        } else if (childrenType === 'object') {
-          mount(children, el);
+        } else {
+          const childrenType = getType(children);
+          if (childrenType === 'array') {
+            for (let index = 0; index < children.length; index++) {
+              const child = children[index];
+              if (isVnode(child)) {
+                mount(child, el);
+              }
+            }
+          } else if (childrenType === 'object') {
+            mount(children, el);
+          }
         }
       }
     }
@@ -142,63 +145,65 @@ function mount(
 
 // diff
 function patch(oNode: vnodeType, nNode: vnodeType) {
-  if (oNode.tag !== 'component' && nNode.tag !== 'component') {
-    if (!checkSameVnode(oNode, nNode)) {
-      const parent = oNode.el.parentNode;
-      const anchor = oNode.el.nextSibling;
-      parent.removeChild(oNode.el);
-      mount(nNode, parent, anchor);
-    } else {
-      const el = (nNode.el = oNode.el);
-      // props
-      const oldProps = oNode.props || {};
-      const newProps = nNode.props || {};
-      const newKeys = Object.keys(newProps);
-      const oldKeys = Object.keys(oldProps);
+  if (notTagComponent(oNode, nNode)) {
+    if (oNode.tag !== 'component' && nNode.tag !== 'component') {
+      if (!checkSameVnode(oNode, nNode)) {
+        const parent = oNode.el.parentNode;
+        const anchor = oNode.el.nextSibling;
+        parent.removeChild(oNode.el);
+        mount(nNode, parent, anchor);
+      } else {
+        const el = (nNode.el = oNode.el);
+        // props
+        const oldProps = oNode.props || {};
+        const newProps = nNode.props || {};
+        const newKeys = Object.keys(newProps);
+        const oldKeys = Object.keys(oldProps);
 
-      for (let index = 0; index < newKeys.length; index++) {
-        const key = newKeys[index];
-        const newValue = newProps[key];
-        const oldValue = oldProps[key];
-        const newPropValueType = getType(newValue);
+        for (let index = 0; index < newKeys.length; index++) {
+          const key = newKeys[index];
+          const newValue = newProps[key];
+          const oldValue = oldProps[key];
+          const newPropValueType = getType(newValue);
 
-        if (newValue !== oldValue) {
-          if (!isUndef(newValue)) {
-            if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
-              setAttribute(el, key, newValue);
+          if (newValue !== oldValue) {
+            if (!isUndef(newValue)) {
+              if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
+                setAttribute(el, key, newValue);
+              }
+
+              if (key === 'style' && newPropValueType === 'object') {
+                setStyleProp(el, newValue);
+              }
+
+              if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
+                removeEvent(el, key, oldProps);
+                addEvent(el, newProps);
+              }
+            } else {
+              removeAttribute(el, key);
             }
+          }
+        }
 
-            if (key === 'style' && newPropValueType === 'object') {
-              setStyleProp(el, newValue);
-            }
-
-            if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
-              removeEvent(el, key, oldProps);
-              addEvent(el, newProps);
-            }
-          } else {
+        for (let index = 0; index < oldKeys.length; index++) {
+          const key = oldKeys[index];
+          if (!newKeys.includes(key)) {
             removeAttribute(el, key);
           }
         }
-      }
 
-      for (let index = 0; index < oldKeys.length; index++) {
-        const key = oldKeys[index];
-        if (!newKeys.includes(key)) {
-          removeAttribute(el, key);
+        // children
+        const oc = oNode.children;
+        const nc = nNode.children;
+
+        if (getType(oc) === 'array' && getType(nc) === 'array') {
+          patchKeyChildren(oc, nc, el);
+        } else if (isVnode(oc) && isVnode(nc)) {
+          patch(oc, nc);
+        } else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
+          updateTextNode(nc, el);
         }
-      }
-
-      // children
-      const oc = oNode.children;
-      const nc = nNode.children;
-
-      if (getType(oc) === 'array' && getType(nc) === 'array') {
-        patchKeyChildren(oc, nc, el);
-      } else if (isVnode(oc) && isVnode(nc)) {
-        patch(oc, nc);
-      } else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
-        updateTextNode(nc, el);
       }
     }
   }
@@ -370,10 +375,10 @@ function setData(callback: () => void, options: any) {
           // Component
           if (optionsType === 'array' && typeof options[1] === 'function') {
             const [name, comFn] = options;
-            const newTree = comFn();
-            const oldTree = _components.get(JSON.stringify(name));
+            const newTree = comFn().children;
+            const oldTree = _components.get(name);
             patch(oldTree, newTree);
-            _components.set(JSON.stringify(name), newTree);
+            _components.set(name, newTree);
           }
           // Router
           else if (optionsType === 'string' && options === 'useRouter') {
