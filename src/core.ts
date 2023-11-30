@@ -100,7 +100,7 @@ function mount(
 
         // Component ID
         if (key === flag[1] && propValueType === 'string') {
-          _components.set(propValue, children);
+          _components.set(propValue, vnode);
         }
 
         // Component Render
@@ -146,64 +146,62 @@ function mount(
 // diff
 function patch(oNode: vnodeType, nNode: vnodeType) {
   if (notTagComponent(oNode, nNode)) {
-    if (oNode.tag !== 'component' && nNode.tag !== 'component') {
-      if (!checkSameVnode(oNode, nNode)) {
-        const parent = oNode.el.parentNode;
-        const anchor = oNode.el.nextSibling;
-        parent.removeChild(oNode.el);
-        mount(nNode, parent, anchor);
-      } else {
-        const el = (nNode.el = oNode.el);
-        // props
-        const oldProps = oNode.props || {};
-        const newProps = nNode.props || {};
-        const newKeys = Object.keys(newProps);
-        const oldKeys = Object.keys(oldProps);
+    if (!checkSameVnode(oNode, nNode)) {
+      const parent = oNode.el.parentNode;
+      const anchor = oNode.el.nextSibling;
+      parent.removeChild(oNode.el);
+      mount(nNode, parent, anchor);
+    } else {
+      const el = (nNode.el = oNode.el);
+      // props
+      const oldProps = oNode.props || {};
+      const newProps = nNode.props || {};
+      const newKeys = Object.keys(newProps);
+      const oldKeys = Object.keys(oldProps);
 
-        for (let index = 0; index < newKeys.length; index++) {
-          const key = newKeys[index];
-          const newValue = newProps[key];
-          const oldValue = oldProps[key];
-          const newPropValueType = getType(newValue);
+      for (let index = 0; index < newKeys.length; index++) {
+        const key = newKeys[index];
+        const newValue = newProps[key];
+        const oldValue = oldProps[key];
+        const newPropValueType = getType(newValue);
 
-          if (newValue !== oldValue) {
-            if (!isUndef(newValue)) {
-              if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
-                setAttribute(el, key, newValue);
-              }
-
-              if (key === 'style' && newPropValueType === 'object') {
-                setStyleProp(el, newValue);
-              }
-
-              if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
-                removeEvent(el, key, oldProps);
-                addEvent(el, newProps);
-              }
-            } else {
-              removeAttribute(el, key);
+        if (newValue !== oldValue) {
+          if (!isUndef(newValue)) {
+            if (newPropValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
+              setAttribute(el, key, newValue);
             }
-          }
-        }
 
-        for (let index = 0; index < oldKeys.length; index++) {
-          const key = oldKeys[index];
-          if (!newKeys.includes(key)) {
+            if (key === 'style' && newPropValueType === 'object') {
+              setStyleProp(el, newValue);
+            }
+
+            if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
+              removeEvent(el, key, oldProps);
+              addEvent(el, newProps);
+            }
+          } else {
             removeAttribute(el, key);
           }
         }
+      }
 
-        // children
-        const oc = oNode.children;
-        const nc = nNode.children;
-
-        if (getType(oc) === 'array' && getType(nc) === 'array') {
-          patchKeyChildren(oc, nc, el);
-        } else if (isVnode(oc) && isVnode(nc)) {
-          patch(oc, nc);
-        } else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
-          updateTextNode(nc, el);
+      for (let index = 0; index < oldKeys.length; index++) {
+        const key = oldKeys[index];
+        if (!newKeys.includes(key)) {
+          removeAttribute(el, key);
         }
+      }
+
+      // children
+      const oc = oNode.children;
+      const nc = nNode.children;
+
+      if (getType(oc) === 'array' && getType(nc) === 'array') {
+        patchKeyChildren(oc, nc, el);
+      } else if (isVnode(oc) && isVnode(nc)) {
+        patch(oc, nc);
+      } else if (!checkVnode(oc) && !checkVnode(nc) && oc !== nc) {
+        updateTextNode(nc, el);
       }
     }
   }
@@ -375,7 +373,7 @@ function setData(callback: () => void, options: any) {
           // Component
           if (optionsType === 'array' && typeof options[1] === 'function') {
             const [name, comFn] = options;
-            const newTree = comFn().children;
+            const newTree = comFn();
             const oldTree = _components.get(name);
             patch(oldTree, newTree);
             _components.set(name, newTree);
