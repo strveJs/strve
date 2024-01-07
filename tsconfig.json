@@ -4,7 +4,10 @@
 		"module": "esnext",
 		"allowJs": true,
 		"outDir": "lib",
-		"lib": ["esnext", "dom"],
+		"lib": [
+			"esnext",
+			"dom"
+		],
 		"declaration": true,
 		"declarationDir": "types",
 		"rootDir": "./src",
@@ -15,8 +18,13 @@
 		"baseUrl": "./src",
 		"esModuleInterop": true,
 		"skipLibCheck": true,
+		"noImplicitThis": false,
 		"forceConsistentCasingInFileNames": true
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules"]
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules"
+	]
 }

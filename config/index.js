@@ -88,6 +88,7 @@ const builds = {
 const config = builds[process.env.TARGET];
 const vars = {
   __VERSION__: version,
+  preventAssignment: true
 };
 config['plugins'].push(replace(vars));
 

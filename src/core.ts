@@ -20,25 +20,14 @@ import {
 // version
 const version: string = '__VERSION__';
 
-// Private Global Data
-let _el: any = Object.create(null);
-let _template: () => vnodeType | null = Object.create(null);
-let _oldTree: vnodeType | null = Object.create(null);
-
 // Flag
-const flag = ['$ref', '$id', '$render'];
+const flag = ['$ref', '$is'];
 
 // Component
-const _components: Map<any, any> = new Map();
+const componentMap: WeakMap<object, any> = new WeakMap();
 
 // domInfo
 const domInfo: WeakMap<object, any> = new WeakMap();
-
-// registerComponent
-function registerComponent(): string {
-  const marker = `strve-${String(Math.random()).slice(2)}`;
-  return marker;
-}
 
 // Update text node
 function updateTextNode(val: any, el: Element) {
@@ -98,14 +87,11 @@ function mount(
           domInfo.set(propValue, el);
         }
 
-        // Component ID
-        if (key === flag[1] && propValueType === 'string') {
-          _components.set(propValue, vnode);
-        }
-
-        // Component Render
-        if (key === flag[2] && propValueType === 'function') {
-          mount(propValue()(), el);
+        // component
+        if (key === flag[1] && propValueType === 'object') {
+          const newTree = propValue.template();
+          mount(newTree, el);
+          componentMap.set(propValue, newTree);
         }
       }
     }
@@ -143,7 +129,7 @@ function mount(
   }
 }
 
-// diff
+// Diff
 function patch(oNode: vnodeType, nNode: vnodeType) {
   if (notTagComponent(oNode, nNode)) {
     if (!checkSameVnode(oNode, nNode)) {
@@ -318,84 +304,32 @@ function patchKeyChildren(n1: Array<vnodeType>, n2: Array<vnodeType>, parentElm:
   }
 }
 
-// onMounted
-let mountHook: Array<() => void> = [];
-function onMounted(fn: (() => void) | null = null) {
-  if (fn === null) return;
-  if (typeof fn !== 'function') {
-    console.warn('The parameter of onMounted is not a function!');
-    return;
-  }
-  mountHook.push(fn);
-}
-
-// onUnmounted
-let unMountedHook: Array<() => void> = [];
-function onUnmounted(fn: (() => void) | null = null) {
-  if (fn === null) return;
-  if (typeof fn !== 'function') {
-    console.warn('The parameter of onUnmounted is not a function!');
-    return;
-  }
-  unMountedHook.push(fn);
-}
-
-const p = getType(Promise) !== 'undefined' && Promise.resolve();
-// nextTick
-const nextTick = (fn: (() => void) | null): Promise<void> => p.then(fn);
-
-// Mount node
-function mountNode(dom: vnodeType, selector: Element | DocumentFragment | Comment | null) {
-  mount(dom, selector);
-  _oldTree = dom;
-  if (mountHook.length > 0) {
-    for (let i = 0, j = mountHook.length; i < j; i++) {
-      mountHook[i] && mountHook[i]();
+// Change data
+async function setData(callback: () => void, content: any) {
+  if (typeof callback === 'function' && typeof Promise !== 'undefined') {
+    try {
+      await Promise.resolve(callback());
+      const target = content ? content : this;
+      const newTree = target.template();
+      const oldTree = componentMap.get(target);
+      patch(oldTree, newTree);
+      componentMap.set(target, newTree);
+    } catch (err: any) {
+      warn(err);
     }
   }
-  mountHook = [];
 }
 
-// Change data
-function setData(callback: () => void, options: any) {
-  if (typeof callback === 'function' && typeof Promise !== 'undefined') {
-    return Promise.resolve()
-      .then(() => {
-        callback();
-      })
-      .then(() => {
-        if (!options) {
-          const newTree = _template();
-          patch(_oldTree, newTree);
-          _oldTree = newTree;
-        } else {
-          const optionsType = getType(options);
-          // Component
-          if (optionsType === 'array' && typeof options[1] === 'function') {
-            const [name, comFn] = options;
-            const newTree = comFn();
-            const oldTree = _components.get(name);
-            patch(oldTree, newTree);
-            _components.set(name, newTree);
-          }
-          // Router
-          else if (optionsType === 'string' && options === 'useRouter') {
-            if (unMountedHook.length > 0) {
-              for (let i = 0, j = unMountedHook.length; i < j; i++) {
-                unMountedHook[i] && unMountedHook[i]();
-              }
-            }
-            unMountedHook = [];
-            _el.innerHTML = '';
-            const tem = _template();
-            mountNode(tem, _el);
-          }
-        }
-      })
-      .catch((err) => warn(err));
-  }
+let _el: any = Object.create(null);
+let _template: () => vnodeType | null = Object.create(null);
+// Reset view
+function resetView() {
+  _el.innerHTML = '';
+  const newTemplate = _template();
+  mount(newTemplate, _el);
 }
 
+// Normalize Container
 function normalizeContainer(container: Element | DocumentFragment | Comment | null | string) {
   if (typeof container === 'string') {
     const res = document.querySelector(container);
@@ -428,35 +362,42 @@ function normalizeContainer(container: Element | DocumentFragment | Comment | nu
   }
 }
 
-function createApp(template: () => vnodeType) {
-  const app = {
-    mount(el: Element | DocumentFragment | Comment | null) {
-      const mountNodeEl = normalizeContainer(el);
-      if (mountNodeEl) {
-        const tem = template();
-        const temType = getType(tem) === 'array';
-        if (temType) {
-          warn('Please provide a root node.');
-        } else {
-          _template = template;
-          _el = mountNodeEl;
-          mountNode(tem, _el);
-        }
-      } else {
-        warn('There must be a mount element node.');
+// Define Component
+function defineComponent(options: any, factory: any) {
+  if (typeof options === 'function') {
+    factory = options;
+    options = Object.create(null);
+  }
+
+  class Component {
+    template: () => any;
+    static instance: Component;
+
+    constructor() {
+      const param = { content: this, setData: setData.bind(this) };
+      const template = factory.call(this, param);
+      this.template = template;
+
+      const newTree = template();
+      if (options.mount) {
+        const mountNodeEl = normalizeContainer(options.mount);
+        mount(newTree, mountNodeEl);
+        componentMap.set(this, newTree);
+        _el = mountNodeEl;
+        _template = newTree;
       }
-    },
-  };
-  return app;
+    }
+
+    static getInstance() {
+      if (!this.instance) {
+        this.instance = new Component();
+      }
+
+      return this.instance;
+    }
+  }
+
+  return Component.getInstance();
 }
 
-export {
-  createApp,
-  domInfo,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  setData,
-  version,
-  registerComponent,
-};
+export { domInfo, version, resetView, setData, defineComponent };

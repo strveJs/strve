@@ -1,11 +1,4 @@
 export {
-  createApp,
-  domInfo,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  setData,
-  version,
-  registerComponent,
+  domInfo, version, resetView, setData, defineComponent
 } from '../lib/core.js';
 export { createStateFlow } from '../lib/stateFlow.js';

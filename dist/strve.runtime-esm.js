@@ -1,6 +1,6 @@
 /*!
- * Strve.js v6.2.6
- * (c) 2021-2023 maomincoding
+ * Strve.js v6.4.0
+ * (c) 2021-2024 maomincoding
  * Released under the MIT License.
  */
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
@@ -195,22 +195,13 @@ function getSequence(arr) {
 }
 
 // version
-const version = '6.2.6';
-// Private Global Data
-let _el = Object.create(null);
-let _template = Object.create(null);
-let _oldTree = Object.create(null);
+const version = '6.4.0';
 // Flag
-const flag = ['$ref', '$id', '$render'];
+const flag = ['$ref', '$is'];
 // Component
-const _components = new Map();
+const componentMap = new WeakMap();
 // domInfo
 const domInfo = new WeakMap();
-// registerComponent
-function registerComponent() {
-    const marker = `strve-${String(Math.random()).slice(2)}`;
-    return marker;
-}
 // Update text node
 function updateTextNode(val, el) {
     let _text = '';
@@ -263,13 +254,11 @@ function mount(vnode, container, anchor) {
                 if (key === flag[0] && propValueType === 'object') {
                     domInfo.set(propValue, el);
                 }
-                // Component ID
-                if (key === flag[1] && propValueType === 'string') {
-                    _components.set(propValue, vnode);
-                }
-                // Component Render
-                if (key === flag[2] && propValueType === 'function') {
-                    mount(propValue()(), el);
+                // component
+                if (key === flag[1] && propValueType === 'object') {
+                    const newTree = propValue.template();
+                    mount(newTree, el);
+                    componentMap.set(propValue, newTree);
                 }
             }
         }
@@ -308,7 +297,7 @@ function mount(vnode, container, anchor) {
         }
     }
 }
-// diff
+// Diff
 function patch(oNode, nNode) {
     if (notTagComponent(oNode, nNode)) {
         if (!checkSameVnode(oNode, nNode)) {
@@ -478,82 +467,31 @@ function patchKeyChildren(n1, n2, parentElm) {
         }
     }
 }
-// onMounted
-let mountHook = [];
-function onMounted(fn = null) {
-    if (fn === null)
-        return;
-    if (typeof fn !== 'function') {
-        console.warn('The parameter of onMounted is not a function!');
-        return;
-    }
-    mountHook.push(fn);
-}
-// onUnmounted
-let unMountedHook = [];
-function onUnmounted(fn = null) {
-    if (fn === null)
-        return;
-    if (typeof fn !== 'function') {
-        console.warn('The parameter of onUnmounted is not a function!');
-        return;
-    }
-    unMountedHook.push(fn);
-}
-const p = getType(Promise) !== 'undefined' && Promise.resolve();
-// nextTick
-const nextTick = (fn) => p.then(fn);
-// Mount node
-function mountNode(dom, selector) {
-    mount(dom, selector);
-    _oldTree = dom;
-    if (mountHook.length > 0) {
-        for (let i = 0, j = mountHook.length; i < j; i++) {
-            mountHook[i] && mountHook[i]();
+// Change data
+async function setData(callback, content) {
+    if (typeof callback === 'function' && typeof Promise !== 'undefined') {
+        try {
+            await Promise.resolve(callback());
+            const target = content ? content : this;
+            const newTree = target.template();
+            const oldTree = componentMap.get(target);
+            patch(oldTree, newTree);
+            componentMap.set(target, newTree);
+        }
+        catch (err) {
+            warn(err);
         }
     }
-    mountHook = [];
 }
-// Change data
-function setData(callback, options) {
-    if (typeof callback === 'function' && typeof Promise !== 'undefined') {
-        return Promise.resolve()
-            .then(() => {
-            callback();
-        })
-            .then(() => {
-            if (!options) {
-                const newTree = _template();
-                patch(_oldTree, newTree);
-                _oldTree = newTree;
-            }
-            else {
-                const optionsType = getType(options);
-                // Component
-                if (optionsType === 'array' && typeof options[1] === 'function') {
-                    const [name, comFn] = options;
-                    const newTree = comFn();
-                    const oldTree = _components.get(name);
-                    patch(oldTree, newTree);
-                    _components.set(name, newTree);
-                }
-                // Router
-                else if (optionsType === 'string' && options === 'useRouter') {
-                    if (unMountedHook.length > 0) {
-                        for (let i = 0, j = unMountedHook.length; i < j; i++) {
-                            unMountedHook[i] && unMountedHook[i]();
-                        }
-                    }
-                    unMountedHook = [];
-                    _el.innerHTML = '';
-                    const tem = _template();
-                    mountNode(tem, _el);
-                }
-            }
-        })
-            .catch((err) => warn(err));
-    }
+let _el = Object.create(null);
+let _template = Object.create(null);
+// Reset view
+function resetView() {
+    _el.innerHTML = '';
+    const newTemplate = _template();
+    mount(newTemplate, _el);
 }
+// Normalize Container
 function normalizeContainer(container) {
     if (typeof container === 'string') {
         const res = document.querySelector(container);
@@ -588,28 +526,36 @@ function normalizeContainer(container) {
         return null;
     }
 }
-function createApp(template) {
-    const app = {
-        mount(el) {
-            const mountNodeEl = normalizeContainer(el);
-            if (mountNodeEl) {
-                const tem = template();
-                const temType = getType(tem) === 'array';
-                if (temType) {
-                    warn('Please provide a root node.');
-                }
-                else {
-                    _template = template;
-                    _el = mountNodeEl;
-                    mountNode(tem, _el);
-                }
+// Define Component
+function defineComponent(options, factory) {
+    if (typeof options === 'function') {
+        factory = options;
+        options = Object.create(null);
+    }
+    class Component {
+        template;
+        static instance;
+        constructor() {
+            const param = { content: this, setData: setData.bind(this) };
+            const template = factory.call(this, param);
+            this.template = template;
+            const newTree = template();
+            if (options.mount) {
+                const mountNodeEl = normalizeContainer(options.mount);
+                mount(newTree, mountNodeEl);
+                componentMap.set(this, newTree);
+                _el = mountNodeEl;
+                _template = newTree;
             }
-            else {
-                warn('There must be a mount element node.');
+        }
+        static getInstance() {
+            if (!this.instance) {
+                this.instance = new Component();
             }
-        },
-    };
-    return app;
+            return this.instance;
+        }
+    }
+    return Component.getInstance();
 }
 
 // It is a flexible and powerful JavaScript state management library.
@@ -645,4 +591,4 @@ class createStateFlow {
     }
 }
 
-export { createApp, createStateFlow, domInfo, nextTick, onMounted, onUnmounted, registerComponent, setData, version };
+export { createStateFlow, defineComponent, domInfo, resetView, setData, version };
