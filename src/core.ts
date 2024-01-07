@@ -27,7 +27,7 @@ const flag = ['$ref', '$is'];
 const componentMap: WeakMap<object, any> = new WeakMap();
 
 // domInfo
-const domInfo: WeakMap<object, any> = new WeakMap();
+const domInfo: any = Object.create(null);
 
 // Update text node
 function updateTextNode(val: any, el: Element) {
@@ -83,8 +83,8 @@ function mount(
         }
 
         // domInfo
-        if (key === flag[0] && propValueType === 'object') {
-          domInfo.set(propValue, el);
+        if (key === flag[0] && propValueType === 'string') {
+          domInfo[propValue] = el;
         }
 
         // component

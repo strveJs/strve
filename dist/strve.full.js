@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.6.0
+ * Strve.js v6.6.6
  * (c) 2021-2024 maomincoding
  * Released under the MIT License.
  */
@@ -396,13 +396,13 @@
     }
 
     // version
-    const version = '6.6.0';
+    const version = '6.6.6';
     // Flag
     const flag = ['$ref', '$is'];
     // Component
     const componentMap = new WeakMap();
     // domInfo
-    const domInfo = new WeakMap();
+    const domInfo = Object.create(null);
     // Update text node
     function updateTextNode(val, el) {
         let _text = '';
@@ -452,8 +452,8 @@
                         setStyleProp(el, propValue);
                     }
                     // domInfo
-                    if (key === flag[0] && propValueType === 'object') {
-                        domInfo.set(propValue, el);
+                    if (key === flag[0] && propValueType === 'string') {
+                        domInfo[propValue] = el;
                     }
                     // component
                     if (key === flag[1] && propValueType === 'object') {
