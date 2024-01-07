@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.4.0
+ * Strve.js v6.6.0
  * (c) 2021-2024 maomincoding
  * Released under the MIT License.
  */
@@ -195,7 +195,7 @@ function getSequence(arr) {
 }
 
 // version
-const version = '6.4.0';
+const version = '6.6.0';
 // Flag
 const flag = ['$ref', '$is'];
 // Component
@@ -484,12 +484,12 @@ async function setData(callback, content) {
     }
 }
 let _el = Object.create(null);
-let _template = Object.create(null);
 // Reset view
-function resetView() {
+function resetView(content) {
     _el.innerHTML = '';
-    const newTemplate = _template();
-    mount(newTemplate, _el);
+    const newTree = content.template();
+    mount(newTree, _el);
+    componentMap.set(content, newTree);
 }
 // Normalize Container
 function normalizeContainer(container) {
@@ -545,7 +545,6 @@ function defineComponent(options, factory) {
                 mount(newTree, mountNodeEl);
                 componentMap.set(this, newTree);
                 _el = mountNodeEl;
-                _template = newTree;
             }
         }
         static getInstance() {

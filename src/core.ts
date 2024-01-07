@@ -321,12 +321,13 @@ async function setData(callback: () => void, content: any) {
 }
 
 let _el: any = Object.create(null);
-let _template: () => vnodeType | null = Object.create(null);
 // Reset view
-function resetView() {
+function resetView(content: any) {
   _el.innerHTML = '';
-  const newTemplate = _template();
-  mount(newTemplate, _el);
+
+  const newTree = content.template();
+  mount(newTree, _el);
+  componentMap.set(content, newTree);
 }
 
 // Normalize Container
@@ -384,7 +385,6 @@ function defineComponent(options: any, factory: any) {
         mount(newTree, mountNodeEl);
         componentMap.set(this, newTree);
         _el = mountNodeEl;
-        _template = newTree;
       }
     }
 
