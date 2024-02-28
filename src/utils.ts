@@ -20,6 +20,12 @@ const SVG_TAGS =
   'linearGradient,stop,radialGradient,' +
   'animateTransform,animateMotion';
 
+const EVENT_TAGS = 
+ 'click,dbclick,mousedown,mouseup,mousemove,mouseover,mouseout,contextmenu'+
+ 'keydown,keyup,keypress,submit,reset,change,focus,blur,input,load,unload,resize,scroll' +
+ 'blur,dragstart,drag,dragenter,dragleave,dragover,drop,dragend,touchstart,touchmove,touchend,touchcancel' +
+ 'animationstart,animationend,animationiteration,transitionend'
+
 function makeMap(str: string): (val: string) => boolean {
   const map: { [key: string]: boolean } = Object.create(null);
   const list = str.split(',');
@@ -34,6 +40,8 @@ function makeMap(str: string): (val: string) => boolean {
 const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
 
 const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
+
+const isEvent = /*#__PURE__*/ makeMap(EVENT_TAGS);
 
 function isXlink(name: string): boolean {
   return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
@@ -148,6 +156,21 @@ function removeEvent(el: HTMLElement, key: string, oldProps: { [key: string]: an
   }
 }
 
+function addEventListener(el:HTMLElement , name:string , listener:EventListenerOrEventListenerObject){
+  const eventName = name.slice(2).toLowerCase();
+  if(isEvent(eventName) && typeof listener === 'function'){
+    el.addEventListener(eventName,listener);
+  }
+}
+
+function removeEventListener(el:HTMLElement , name:string , listener:EventListenerOrEventListenerObject){
+  const eventName = name.slice(2).toLowerCase();
+  if(isEvent(eventName) && typeof listener === 'function'){
+    el.removeEventListener(eventName,listener);
+  }
+  
+}
+
 function setAttribute(el: HTMLElement, key: string, value: string | boolean): void {
   if (typeof isXlink === 'function' && !isXlink(key)) {
     el.setAttribute(key, value.toString());
@@ -244,4 +267,6 @@ export {
   warn,
   getSequence,
   notTagComponent,
+  addEventListener,
+  removeEventListener
 };
