@@ -6,8 +6,6 @@ import {
   isVnode,
   checkVnode,
   setStyleProp,
-  addEvent,
-  removeEvent,
   setAttribute,
   removeAttribute,
   createNode,
@@ -15,6 +13,8 @@ import {
   getSequence,
   vnodeType,
   notTagComponent,
+  addEventListener,
+  removeEventListener
 } from './utils';
 
 // version
@@ -66,7 +66,7 @@ function mount(
     vnode.el = el;
     // props
     if (!isUndef(props)) {
-      addEvent(el, props);
+
       const keys = Object.keys(props);
 
       for (let index = 0; index < keys.length; index++) {
@@ -74,6 +74,10 @@ function mount(
         const propValue = props[key];
         const propValueType = getType(propValue);
 
+        if (key.startsWith("on")) {
+          addEventListener(el, key , propValue);
+        }
+        
         if (propValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
           setAttribute(el, key, propValue);
         }
@@ -162,8 +166,8 @@ function patch(oNode: vnodeType, nNode: vnodeType) {
             }
 
             if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
-              removeEvent(el, key, oldProps);
-              addEvent(el, newProps);
+              removeEventListener(el , key , oldValue);
+              addEventListener(el , key , newValue)
             }
           } else {
             removeAttribute(el, key);
