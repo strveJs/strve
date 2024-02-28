@@ -14,7 +14,7 @@ import {
   vnodeType,
   notTagComponent,
   addEventListener,
-  removeEventListener
+  removeEventListener,
 } from './utils';
 
 // version
@@ -24,7 +24,7 @@ const version: string = '__VERSION__';
 const flag = ['$ref', '$is'];
 
 // Component
-const componentMap: WeakMap<object, any> = new WeakMap();
+let componentMap: WeakMap<object, any> = new WeakMap();
 
 // domInfo
 const domInfo: any = Object.create(null);
@@ -66,7 +66,6 @@ function mount(
     vnode.el = el;
     // props
     if (!isUndef(props)) {
-
       const keys = Object.keys(props);
 
       for (let index = 0; index < keys.length; index++) {
@@ -74,10 +73,10 @@ function mount(
         const propValue = props[key];
         const propValueType = getType(propValue);
 
-        if (key.startsWith("on")) {
-          addEventListener(el, key , propValue);
+        if (key.startsWith('on')) {
+          addEventListener(el, key, propValue);
         }
-        
+
         if (propValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
           setAttribute(el, key, propValue);
         }
@@ -166,8 +165,8 @@ function patch(oNode: vnodeType, nNode: vnodeType) {
             }
 
             if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
-              removeEventListener(el , key , oldValue);
-              addEventListener(el , key , newValue)
+              removeEventListener(el, key, oldValue);
+              addEventListener(el, key, newValue);
             }
           } else {
             removeAttribute(el, key);
@@ -328,6 +327,8 @@ let _el: any = Object.create(null);
 // Reset view
 function resetView(content: any) {
   _el.innerHTML = '';
+  componentMap = null;
+  componentMap = new WeakMap();
 
   const newTree = content.template();
   mount(newTree, _el);

@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.6.6
+ * Strve.js v6.7.0
  * (c) 2021-2024 maomincoding
  * Released under the MIT License.
  */
@@ -21,6 +21,10 @@ const SVG_TAGS = 'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,fil
     'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
     'linearGradient,stop,radialGradient,' +
     'animateTransform,animateMotion';
+const EVENT_TAGS = 'click,dbclick,mousedown,mouseup,mousemove,mouseover,mouseout,contextmenu' +
+    'keydown,keyup,keypress,submit,reset,change,focus,blur,input,load,unload,resize,scroll' +
+    'blur,dragstart,drag,dragenter,dragleave,dragover,drop,dragend,touchstart,touchmove,touchend,touchcancel' +
+    'animationstart,animationend,animationiteration,transitionend';
 function makeMap(str) {
     const map = Object.create(null);
     const list = str.split(',');
@@ -33,6 +37,7 @@ function makeMap(str) {
 }
 const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
 const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
+const isEvent = /*#__PURE__*/ makeMap(EVENT_TAGS);
 function isXlink(name) {
     return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
 }
@@ -99,20 +104,16 @@ function warn(msg) {
 function setStyleProp(el, prototype) {
     Object.assign(el.style, prototype);
 }
-function addEvent(el, props) {
-    for (const [key, value] of Object.entries(props)) {
-        if (key.startsWith('on')) {
-            const name = key.slice(2).toLowerCase();
-            el.addEventListener(name, value);
-        }
+function addEventListener(el, name, listener) {
+    const eventName = name.slice(2).toLowerCase();
+    if (isEvent(eventName) && typeof listener === 'function') {
+        el.addEventListener(eventName, listener);
     }
 }
-function removeEvent(el, key, oldProps) {
-    if (key.startsWith('on')) {
-        const name = key.slice(2, 3).toLowerCase() + key.slice(3);
-        if (typeof oldProps[key] === 'function') {
-            el.removeEventListener(name, oldProps[key]);
-        }
+function removeEventListener(el, name, listener) {
+    const eventName = name.slice(2).toLowerCase();
+    if (isEvent(eventName) && typeof listener === 'function') {
+        el.removeEventListener(eventName, listener);
     }
 }
 function setAttribute(el, key, value) {
@@ -195,11 +196,11 @@ function getSequence(arr) {
 }
 
 // version
-const version = '6.6.6';
+const version = '6.7.0';
 // Flag
 const flag = ['$ref', '$is'];
 // Component
-const componentMap = new WeakMap();
+let componentMap = new WeakMap();
 // domInfo
 const domInfo = Object.create(null);
 // Update text node
@@ -238,12 +239,14 @@ function mount(vnode, container, anchor) {
         vnode.el = el;
         // props
         if (!isUndef(props)) {
-            addEvent(el, props);
             const keys = Object.keys(props);
             for (let index = 0; index < keys.length; index++) {
                 const key = keys[index];
                 const propValue = props[key];
                 const propValueType = getType(propValue);
+                if (key.startsWith('on')) {
+                    addEventListener(el, key, propValue);
+                }
                 if (propValueType !== 'function' && key !== 'key' && !flag.includes(key)) {
                     setAttribute(el, key, propValue);
                 }
@@ -327,8 +330,8 @@ function patch(oNode, nNode) {
                             setStyleProp(el, newValue);
                         }
                         if (newPropValueType === 'function' && newValue.toString() !== oldValue.toString()) {
-                            removeEvent(el, key, oldProps);
-                            addEvent(el, newProps);
+                            removeEventListener(el, key, oldValue);
+                            addEventListener(el, key, newValue);
                         }
                     }
                     else {
@@ -487,6 +490,8 @@ let _el = Object.create(null);
 // Reset view
 function resetView(content) {
     _el.innerHTML = '';
+    componentMap = null;
+    componentMap = new WeakMap();
     const newTree = content.template();
     mount(newTree, _el);
     componentMap.set(content, newTree);
@@ -557,37 +562,4 @@ function defineComponent(options, factory) {
     return Component.getInstance();
 }
 
-// It is a flexible and powerful JavaScript state management library.
-class createStateFlow {
-    _mutations;
-    _actions;
-    _state;
-    constructor(options) {
-        this._mutations = options.mutations;
-        this._actions = options.actions;
-        this._state = new Proxy(options.state, {
-            set: (target, key, value) => {
-                if (this._mutations[key]) {
-                    this._mutations[key](target, value);
-                }
-                target[key] = value;
-                return true;
-            },
-        });
-    }
-    commit(mutationName, payload) {
-        if (this._mutations[mutationName]) {
-            this._mutations[mutationName](this._state, payload);
-        }
-    }
-    async dispatch(actionName, payload) {
-        if (this._actions[actionName]) {
-            await this._actions[actionName](this, payload);
-        }
-    }
-    get state() {
-        return this._state;
-    }
-}
-
-export { createStateFlow, defineComponent, domInfo, resetView, setData, version };
+export { defineComponent, domInfo, resetView, setData, version };

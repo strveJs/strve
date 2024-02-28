@@ -22,8 +22,10 @@ declare function addEvent(el: HTMLElement, props: {
 declare function removeEvent(el: HTMLElement, key: string, oldProps: {
     [key: string]: any;
 }): void;
+declare function addEventListener(el: HTMLElement, name: string, listener: EventListenerOrEventListenerObject): void;
+declare function removeEventListener(el: HTMLElement, name: string, listener: EventListenerOrEventListenerObject): void;
 declare function setAttribute(el: HTMLElement, key: string, value: string | boolean): void;
 declare function removeAttribute(el: HTMLElement, key: string): void;
 declare function createNode(tag: string): Element | DocumentFragment | Comment | null;
 declare function getSequence(arr: number[]): number[];
-export { getType, isComplexType, isUndef, checkSameVnode, isVnode, checkVnode, setStyleProp, addEvent, removeEvent, setAttribute, removeAttribute, createNode, warn, getSequence, notTagComponent, };
+export { getType, isComplexType, isUndef, checkSameVnode, isVnode, checkVnode, setStyleProp, addEvent, removeEvent, setAttribute, removeAttribute, createNode, warn, getSequence, notTagComponent, addEventListener, removeEventListener };
