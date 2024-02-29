@@ -222,10 +222,6 @@
         'feImage,feMerge,feMorphology,feOffset,feSpecularLighting,feTile,feTurbulence,feDistantLight,fePointLight,feSpotLight,' +
         'linearGradient,stop,radialGradient,' +
         'animateTransform,animateMotion';
-    const EVENT_TAGS = 'click,dbclick,mousedown,mouseup,mousemove,mouseover,mouseout,contextmenu' +
-        'keydown,keyup,keypress,submit,reset,change,focus,blur,input,load,unload,resize,scroll' +
-        'blur,dragstart,drag,dragenter,dragleave,dragover,drop,dragend,touchstart,touchmove,touchend,touchcancel' +
-        'animationstart,animationend,animationiteration,transitionend';
     function makeMap(str) {
         const map = Object.create(null);
         const list = str.split(',');
@@ -238,7 +234,6 @@
     }
     const isHTMLTag = /*#__PURE__*/ makeMap(HTML_TAGS);
     const isSVG = /*#__PURE__*/ makeMap(SVG_TAGS);
-    const isEvent = /*#__PURE__*/ makeMap(EVENT_TAGS);
     function isXlink(name) {
         return name.charAt(5) === ':' && name.slice(0, 5) === 'xlink';
     }
@@ -307,13 +302,13 @@
     }
     function addEventListener(el, name, listener) {
         const eventName = name.slice(2).toLowerCase();
-        if (isEvent(eventName) && typeof listener === 'function') {
+        if (typeof listener === 'function') {
             el.addEventListener(eventName, listener);
         }
     }
     function removeEventListener(el, name, listener) {
         const eventName = name.slice(2).toLowerCase();
-        if (isEvent(eventName) && typeof listener === 'function') {
+        if (typeof listener === 'function') {
             el.removeEventListener(eventName, listener);
         }
     }

@@ -28,4 +28,4 @@ declare function setAttribute(el: HTMLElement, key: string, value: string | bool
 declare function removeAttribute(el: HTMLElement, key: string): void;
 declare function createNode(tag: string): Element | DocumentFragment | Comment | null;
 declare function getSequence(arr: number[]): number[];
-export { getType, isComplexType, isUndef, checkSameVnode, isVnode, checkVnode, setStyleProp, addEvent, removeEvent, setAttribute, removeAttribute, createNode, warn, getSequence, notTagComponent, addEventListener, removeEventListener };
+export { getType, isComplexType, isUndef, checkSameVnode, isVnode, checkVnode, setStyleProp, addEvent, removeEvent, setAttribute, removeAttribute, createNode, warn, getSequence, notTagComponent, addEventListener, removeEventListener, };
