@@ -1,1 +1,1 @@
-export { domInfo, version, resetView, setData, defineComponent } from '../lib/core.js';
+export { version, resetView, setData, defineComponent } from '../lib/core.js';

@@ -130,24 +130,6 @@ function setStyleProp(el: HTMLElement, prototype: { [key: string]: string }) {
   Object.assign(el.style, prototype);
 }
 
-function addEvent(el: HTMLElement, props: { [key: string]: EventListenerOrEventListenerObject }) {
-  for (const [key, value] of Object.entries(props)) {
-    if (key.startsWith('on')) {
-      const name = key.slice(2).toLowerCase();
-      el.addEventListener(name, value);
-    }
-  }
-}
-
-function removeEvent(el: HTMLElement, key: string, oldProps: { [key: string]: any }): void {
-  if (key.startsWith('on')) {
-    const name = key.slice(2, 3).toLowerCase() + key.slice(3);
-    if (typeof oldProps[key] === 'function') {
-      el.removeEventListener(name, oldProps[key]);
-    }
-  }
-}
-
 function addEventListener(
   el: HTMLElement,
   name: string,
@@ -258,8 +240,6 @@ export {
   isVnode,
   checkVnode,
   setStyleProp,
-  addEvent,
-  removeEvent,
   setAttribute,
   removeAttribute,
   createNode,

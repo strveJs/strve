@@ -26,9 +26,6 @@ const flag = ['$ref', '$is'];
 // Component
 let componentMap: WeakMap<object, any> = new WeakMap();
 
-// domInfo
-const domInfo: any = Object.create(null);
-
 // Update text node
 function updateTextNode(val: any, el: Element) {
   let _text = '';
@@ -83,11 +80,6 @@ function mount(
 
         if (key === 'style' && propValueType === 'object') {
           setStyleProp(el, propValue);
-        }
-
-        // domInfo
-        if (key === flag[0] && propValueType === 'string') {
-          domInfo[propValue] = el;
         }
 
         // component
@@ -405,4 +397,4 @@ function defineComponent(options: any, factory: any) {
   return Component.getInstance();
 }
 
-export { domInfo, version, resetView, setData, defineComponent };
+export { version, resetView, setData, defineComponent };
