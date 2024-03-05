@@ -21,7 +21,7 @@ import {
 const version: string = '__VERSION__';
 
 // Flag
-const flag = ['$ref', '$is'];
+const flag: Array<string> = ['$ref', '$is'];
 
 // Component
 let componentMap: WeakMap<object, any> = new WeakMap();
@@ -361,7 +361,7 @@ function normalizeContainer(container: Element | DocumentFragment | Comment | nu
 }
 
 // Define Component
-function defineComponent(options: any, factory: any) {
+function defineComponent(options?: any, factory?: any) {
   if (typeof options === 'function') {
     factory = options;
     options = Object.create(null);

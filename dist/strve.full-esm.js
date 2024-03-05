@@ -1,5 +1,5 @@
 /*!
- * Strve.js v6.7.0
+ * Strve.js v6.7.1
  * (c) 2021-2024 maomincoding
  * Released under the MIT License.
  */
@@ -386,7 +386,7 @@ function getSequence(arr) {
 }
 
 // version
-const version = '6.7.0';
+const version = '6.7.1';
 // Flag
 const flag = ['$ref', '$is'];
 // Component

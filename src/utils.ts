@@ -1,5 +1,5 @@
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element
-const HTML_TAGS =
+const HTML_TAGS: string =
   'html,body,base,head,link,meta,style,title,address,article,aside,footer,' +
   'header,h1,h2,h3,h4,h5,h6,nav,section,div,dd,dl,dt,figcaption,' +
   'figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,' +
@@ -11,7 +11,7 @@ const HTML_TAGS =
   'summary,template,blockquote,iframe,tfoot';
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Element
-const SVG_TAGS =
+const SVG_TAGS: string =
   'svg,animate,circle,clippath,cursor,image,defs,desc,ellipse,filter,font-face' +
   'foreignobject,g,glyph,line,marker,mask,missing-glyph,path,pattern,' +
   'polygon,polyline,rect,switch,symbol,text,textpath,tspan,use,view,' +
